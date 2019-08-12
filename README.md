@@ -642,17 +642,17 @@ functions to test if matrix has a special characteristic:
 * 'bool IsPermutation(xi_matrix)'     - return true if 'xi_matrix' is permutation matrix (there is only one '1' in every column and row).
 
 matrix decompositions:
-* 'LU(xi_matrix, xo_lowerUpper, VectorBase<size_t, COL> xo_pivot, int32_t xo_sign)' - return the lower-upper (Lower*Pivot*Upper) decomposition of cubic matrix 'xi_matrix' in one matrix 'xo_lowerUpper' along with pivot matrix (givne as a vector holding the diagonal 'xo_pivot') and pivot sign "xo_sign". The decomposition is performed such that the lower triangular matrix has a diagonal filled with '1'.
-* 'QRgramSchmidt(xi_matrix, Q, R)'                                                  - given rectangular matrix 'xi_matrix' (COL*ROW, ROW >= COL), perform QR decomposition (using gram-schmidt process) and return 'Q' (COL*ROW orthogonal matrix) and 'R' (COL*COL upper triangular matrix).
-* 'QRgivensRotations(xi_matrix, Q, R)'                                              - given rectangular matrix 'xi_matrix' (COL*ROW, ROW >= COL), perform QR decomposition (using givens rotatin) and return 'Q' (COL*ROW orthogonal matrix) and 'R' (COL*COL upper triangular matrix).
-* 'L = Cholesky(xi_matrix)'                                                         - given cubic and positive definite matrix 'xi_matrix', return a lower triangular matrix 'L' such that L*L' = xi_matrix. This is called Cholesky decomposition.
+* 'LU(xi_matrix, xo_lowerUpper, VectorBase<size_t, COL> xo_pivot, int32_t xo_sign)' - return the lower-upper (Lower * Pivot * Upper) decomposition of cubic matrix 'xi_matrix' in one matrix 'xo_lowerUpper' along with pivot matrix (givne as a vector holding the diagonal 'xo_pivot') and pivot sign "xo_sign". The decomposition is performed such that the lower triangular matrix has a diagonal filled with '1'.
+* 'QRgramSchmidt(xi_matrix, Q, R)'                                                  - given rectangular matrix 'xi_matrix' (COL * ROW, ROW >= COL), perform QR decomposition (using gram-schmidt process) and return 'Q' (COL * ROW orthogonal matrix) and 'R' (COL * COL upper triangular matrix).
+* 'QRgivensRotations(xi_matrix, Q, R)'                                              - given rectangular matrix 'xi_matrix' (COL * ROW, ROW >= COL), perform QR decomposition (using givens rotatin) and return 'Q' (COL * ROW orthogonal matrix) and 'R' (COL * COL upper triangular matrix).
+* 'L = Cholesky(xi_matrix)'                                                         - given cubic and positive definite matrix 'xi_matrix', return a lower triangular matrix 'L' such that L * L' = xi_matrix. This is called Cholesky decomposition.
 * 'SVDfast(xi_mat, xo_UW, xo_W2, xo_V)' - perform singular value decomposition of matrix 'xi_mat', but it returns a different output then the standard operation, see extra information at function definition.
 * 'SVD(xi_mat, xo_U, xo_W, xo_V)'       - perform singular value decomposition of matrix 'xi_mat', and return 'xi_U * xi_W * xi_V^T', where 'xi_U' & 'xi_V' columns are orthonormal and 'xi_W' holds the singular values.
 
 linear equation system solvers:
-* 'b = SolveSquareLU(A, b)'      - given cubic matrix 'A' and column matrix 'b', solve the linear equations system A*x=b, and return 'x'. This method uses LU decomposition internaly.
-* 'b = SolveCubicCholesky(A, b)' - given cubic and positive definite matrix 'A' and column matrix 'b', solve the linear equations system A*x=b, and return 'x'. This method uses Cholesky decomposition internaly.
-* 'b = SolveQR(A, b)'            - given rectangular (rows >= columns) matrix 'A', solve the linear equation system A*x=b, and return x. This method uses both LU and QR decompositins. 
+* 'b = SolveSquareLU(A, b)'      - given cubic matrix 'A' and column matrix 'b', solve the linear equations system A * x = b, and return 'x'. This method uses LU decomposition internaly.
+* 'b = SolveCubicCholesky(A, b)' - given cubic and positive definite matrix 'A' and column matrix 'b', solve the linear equations system A * x = b, and return 'x'. This method uses Cholesky decomposition internaly.
+* 'b = SolveQR(A, b)'            - given rectangular (rows >= columns) matrix 'A', solve the linear equation system A * x = b, and return x. This method uses both LU and QR decompositins. 
 
 The following specialized functions are availabe for 2x2 matrix:
 
