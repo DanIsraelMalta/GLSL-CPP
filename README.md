@@ -574,7 +574,6 @@ The following general numerical functions are available for both vectors and mat
 * 'T = length(Collection)'                                                    - return the length/magnitude of a 'Collection'.
 * 'T = distance(Collection, Collection)'                                      - return the distance between two collections of identical underlying type.
 * 'T = dot(Collection, ...)'                                                  - return the internal ("dot") product between a variaidic number of collections. If input argument is composed of only one collection - the output is its squared magnitude.
-* 'Vector<T> = normalize(Vector<T>)'                                          - return a vector in the same direction but with unit magnitude.
 * 'Collection = mix(Collection, Collection, U blend)'                         - return the linear blend between two vectors.
 * 'Collection = step(Collection, U edge)'                                     - for each element: return '0' if element is smaller than 'edge', otherwise - return '1'.
 * 'Collection = smoothstep(Collection, U edge0, W edge1)'                     - for each element: return '0' is smaller then 'edge0', return '1' if larger then 'edge1',
@@ -587,6 +586,7 @@ The following general numerical functions are available for both vectors and mat
 
 The following functions are availabe for vector types:
 
+* 'Vector<T> = normalize(Vector<T>)'                         - return a vector in the same direction but with unit magnitude.
 * 'Vector<T, N> = ProjectOn(Vector<T, N> a, Vector<T, N> b)' - return the projection of vector 'a' on 'b'.
 * 'T = leftLookingDot(vector 1, vector 2, start, end)'       - return the internal ("dot") product between two vectors, but only between elements in the index range ['start', 'end'].
 
