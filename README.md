@@ -9,6 +9,7 @@ This library is not limited to GLSL features alone, as it include numerous mathe
 
 * [FAQ](#FAQ)
 * [Vector Constructs](#Numerical-Constructs)
+* [Swizzling](#Swizzling)
 * [Matrix Constructs](#Matrix-Constructs)
 * [Numerical Operators](#Numerical-Operators)
 * [Bitwise Operators](#Bitwise-Operators)
@@ -163,7 +164,7 @@ available construction options:
 * 'Vector4<T>(Vector2<U> vector, W value1, R value2)'  - first and second elements are taken from 'vector', third element from 'value1', fourth element from 'value2'.
 * 'Vector4<T>(W value1, Vector2<U> vector, R value2)'  - first element from 'value1', second and third elements from 'vector',  fourth element from 'value2'.
 * 'Vector4<T>(W value1, R value2, Vector2<U> vector)'  - first element from 'value1', second element from 'value2', third and fourth elements from 'vector'.
-* 'Vector4<T>(Swizzle1, Swizzle2)'                     - first and second elements are taken from 2 elements [swizzle1](#Swizzling), third and fourth elements are taken from 2 elements [swizzle2](#Swizzling).
+* 'Vector4<T>(Swizzle1, Swizzle2)'                     - first and second elements are taken from 2 elements [swizzle](#Swizzling), third and fourth elements are taken from 2 elements [swizzle](#Swizzling).
 * 'Vector4<T>(Swizzle, W value1, R value2)'            - first and second elements are taken from 2 elements [swizzle](#Swizzling), third element from 'value1', fourth element from 'value2'.
 * 'Vector4<T>(W value1, Swizzle, R value2)'            - first element from 'value1', second and third elements from 2 elements [swizzle](#Swizzling),  fourth element from 'value2'.
 * 'Vector4<T>(W value1, R value2, Swizzle)'            - first element from 'value1', second element from 'value2', third and fourth elements from 2 elements [swizzle](#Swizzling).
@@ -177,7 +178,7 @@ available assignment options:
 * 'Vector4<T> = swizzle'          - assigns a [swizzle](#Swizzling) of length 4 to vector elements.
 * 'Vector4<T> = VectorBase<U, N>' - assigns the elements from right-hand-side vector, whose length is equal or larger then 4.
 
-### Swizzling (replicate GLSL syntax and functionality)
+### Swizzling
 
 Although any vector can be accessed by the '[]' operator, they often have a name or an interpretation given as a single letter.
 As a notational convenience, several letters are associated with each component based on common usage of position, color or texture coordinate vectors.
@@ -568,7 +569,7 @@ The following binary functions are available for both vectors and matrix types (
 
 ### General/Numerical Functions:
 
-The following general numerical functions are available for either vectors, matrix types or both (generaly refered to as 'Collection'):
+The following general numerical functions are available for both vectors and matrix (generaly refered to as 'Collection'):
 
 * 'T = length(Collection)'                                                    - return the length/magnitude of a 'Collection'.
 * 'T = distance(Collection, Collection)'                                      - return the distance between two collections of identical underlying type.
@@ -582,12 +583,12 @@ The following general numerical functions are available for either vectors, matr
                                                                                 otherwise - perform Hermite interpolation between '0' and '1'.
 * 'Collection = smootherstep(Collection C, U edge0, W edge1)                  - for each element: return '0' is smaller then 'edge0', return '1' if larger then 'edge1',
                                                                                 otherwise - perform Hermite interpolation between '0' and '1', but with the first and second derivative at the edges are '0'.
-* 'Vector<T, N> = ProjectOn(Vector<T, N> a, Vector<T, N> b)'                  - return the projection of vector 'a' on 'b'.
 * 'Collection = fma(Collection a, Collection b, Collection c)'                - return an element wise fused multiply add operation between three collections, i.e. - return 'a*b+c'.
 
 The following functions are availabe for vector types:
 
-* 'T = leftLookingDot(vector 1, vector 2, start, end)' - return the internal ("dot") product between two vectors, but only between elements in the index range [start, end].
+* 'Vector<T, N> = ProjectOn(Vector<T, N> a, Vector<T, N> b)' - return the projection of vector 'a' on 'b'.
+* 'T = leftLookingDot(vector 1, vector 2, start, end)'       - return the internal ("dot") product between two vectors, but only between elements in the index range ['start', 'end'].
 
 The following specialized numerical functions are available for 3 elements vectors:
 
