@@ -621,6 +621,8 @@ matrix modifiers:
 * 'MatrixBase SwapColumns(MatrixBase xi_matrix, i, j)'           - returns 'xi_matrix' after its 'i'th and 'j'th columns were swapped.
 * 'SetRow(MatrixBase xio_matrix, i, VectorBase row)'             - set 'xio_matrix' 'i'th row to be 'row'.
 * 'SetDiagonal(MatrixBase xio_matrix, i, T diagonal)'            - set cubic 'xio_matrix' diagonal elements to 'diagonal'.
+* 'T Trace(MatrixBase xi_matrix)'                                - return the trace (sum of diagonal elements) of cubic matrix 'xi_matrix'.
+* 'T Determinant(MatrixBase xi_matrix)'                          - return the determinant of cubic matrix 'xi_matrix'.
 * 'MatrixBase Transpose(MatrixBase xi_mat)'                      - return the transpose of cubic matrix 'xi_mat'.
 * 'MatrixBase Inv(MatrixBase xi_mat)'                            - return the inverse of cubic matrix 'xi_mat'.
 * 'MatrixBase Orthonormalize(MatrixBase xi_matrix)'              - orthonormalize (make the columns normalized and orthogonal to each other) 'xi_matrix'.
