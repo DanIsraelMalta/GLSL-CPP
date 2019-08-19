@@ -625,7 +625,7 @@ matrix modifiers:
 * 'SetDiagonal(MatrixBase xio_matrix, i, T diagonal)'            - set cubic 'xio_matrix' diagonal elements to 'diagonal'.
 * 'T Trace(MatrixBase xi_matrix)'                                - return the trace (sum of diagonal elements) of cubic matrix 'xi_matrix'.
 * 'T Determinant(MatrixBase xi_matrix)'                          - return the determinant of cubic matrix 'xi_matrix'.
-* 'MatrixBase Transpose(MatrixBase xi_mat)'                      - return the transpose of cubic matrix 'xi_mat'.
+* 'MatrixBase Transpose(MatrixBase xi_mat)'                      - return the transpose of matrix 'xi_mat'.
 * 'MatrixBase Inv(MatrixBase xi_mat)'                            - return the inverse of cubic matrix 'xi_mat'.
 * 'MatrixBase Orthonormalize(MatrixBase xi_matrix)'              - orthonormalize (make the columns normalized and orthogonal to each other) 'xi_matrix'.
 * 'MatrixBase matrixMatrixMul(MatrixBase xi_a, MatrixBase xi_b)' - return the element wise multiplication between two identical size matrix 'xi_a' & 'xi_b'.
@@ -650,8 +650,8 @@ matrix decompositions:
 * 'QRgramSchmidt(xi_matrix, Q, R)'                                                  - given rectangular matrix 'xi_matrix' (COL * ROW, ROW >= COL), perform QR decomposition (using gram-schmidt process) and return 'Q' (COL * ROW orthogonal matrix) and 'R' (COL * COL upper triangular matrix).
 * 'QRgivensRotations(xi_matrix, Q, R)'                                              - given rectangular matrix 'xi_matrix' (COL * ROW, ROW >= COL), perform QR decomposition (using givens rotatin) and return 'Q' (COL * ROW orthogonal matrix) and 'R' (COL * COL upper triangular matrix).
 * 'L = Cholesky(xi_matrix)'                                                         - given cubic and positive definite matrix 'xi_matrix', return a lower triangular matrix 'L' such that L * L' = xi_matrix. This is called Cholesky decomposition.
-* 'SVDfast(xi_mat, xo_UW, xo_W2, xo_V)' - perform singular value decomposition of matrix 'xi_mat', but it returns a different output then the standard operation, see extra information at function definition.
-* 'SVD(xi_mat, xo_U, xo_W, xo_V)'       - perform singular value decomposition of matrix 'xi_mat', and return 'xi_U * xi_W * xi_V^T', where 'xi_U' & 'xi_V' columns are orthonormal and 'xi_W' holds the singular values.
+* 'SVDfast(xi_mat, xo_UW, xo_W2, xo_V)'                                             - perform singular value decomposition of matrix 'xi_mat', but it returns a different output then the standard operation, see extra information at function definition.
+* 'SVD(xi_mat, xo_U, xo_W, xo_V)'                                                   - perform singular value decomposition of matrix 'xi_mat', and return 'xi_U * xi_W * xi_V^T', where 'xi_U' & 'xi_V' columns are orthonormal and 'xi_W' holds the singular values.
 
 linear equation system solvers:
 * 'b = SolveSquareLU(A, b)'      - given cubic matrix 'A' and column matrix 'b', solve the linear equations system A * x = b, and return 'x'. This method uses LU decomposition internaly.
@@ -660,7 +660,11 @@ linear equation system solvers:
 
 The following specialized functions are availabe for 2x2 matrix:
 
-* 
+* 'EigenValues2x2(matrix, xo_eigen1, xo_eigen2)'                                     - given a cubic 2x2 matrix 'matrix', return its eigenvalues 'xo_eigen1' & 'xi_eigen2'.
+* 'EigenSolver2x2(matrix, xo_eigen1, xo_eigen2, xo_eigen_vector1, xo_eigen_vector2)' - given a cubic 2x2 matrix 'matrix', return its eigenvalues 'xo_eigen1' & 'xi_eigen2' and its approrpiate eigenvectors ('xo_eigen_vector1', 'xo_eigen_vector2'').
+* 'SVDsymmetric2x2(matrix, matrix U, vector W)'                                      - given a cubic symmetric 2x2 matrix 'matrix', perform singular value decomposition and return 'U' and 'W' which are: matrix = U * W * U^T (where W is a diagonal matrix returned as a vector holding the diagonal elements)
+* 'PolarDecomposition2x2(matrix, matrix r, matrix S)'                                - given a vubic 2x2 matrix 'matrix', perform polar decomposition and return 'R' and 'S' (matrix = R * S), where 'R' is rotatin matrix and 'S' is symmetric describing deformations.
+
 
 The following specialized functions are availabe for 3x3 matrix:
 
