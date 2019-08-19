@@ -7,6 +7,32 @@
 
 using namespace GLSLCPP;
 
+// ------------------------------
+// --- scalar operations test ---
+// ------------------------------
+void ScalarTest() {
+	// second order equation
+	float x1, x2;
+	bool exist0{ SolveQuadratic(3.0f, 7.8f, 6.3f, x1, x2) };
+	assert(exist0 == false);
+	assert(x1 == 0.0f);
+	assert(x2 == 0.0f);
+
+	exist0 = SolveQuadratic(-3.0f, 7.8f, 6.3f, x1, x2);
+	assert(exist0 == true);
+	assert(x1 == -0.646792233f);
+	assert(x2 == 3.24679255f);
+
+	// third order equation
+	VectorBase<float, 6> roots,
+						 rootseq(-5.63887119f, 0.0f,
+								 0.819435477f, 0.754922748f,
+								 0.819435477f, -0.754922748f);
+	uint32_t n{ SolveCubic(4.0f, -8.0f, 7.0f, roots) };
+	assert(n == 1);
+	assert(roots == rootseq);
+}
+
 // ------------------------------------
 // --- VectorBase construction test ---
 // ------------------------------------
@@ -2174,6 +2200,7 @@ void MatrixBaseTest() {
 
 
 int main() {
+    ScalarTest();
     VectorBaseTest();
     Vector2Test();
     Vector3Test();
