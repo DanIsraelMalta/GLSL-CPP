@@ -19,7 +19,7 @@ This library is not limited to GLSL features alone, as it include numerous mathe
 * [Functions](#Functions)
 * [Quaternion](#Quaternion)
 * [Interval](#Interval)
-* [Scalar Functions](#Scalar Functions)
+* [Scalar Functions](#Scalar-Functions)
 
 ## FAQ
 
