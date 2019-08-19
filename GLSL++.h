@@ -13,3 +13,4 @@
 #include "Vector4.h"
 #include "MatrixBase.h"
 #include "MatrixOperations.h"
+#include "Scalar.h"
