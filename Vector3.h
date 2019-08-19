@@ -168,6 +168,9 @@ namespace GLSLCPP {
         // constructors
     public:
 
+        // default constructor
+		Vector3() : m_data() {}
+        
         // construct using 1 value
         template<typename U> explicit constexpr Vector3(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : VectorBase<T, 3>(xi_value) { CopyParentData(); }
 
