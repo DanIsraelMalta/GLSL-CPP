@@ -1,3 +1,5 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/60dee26081f547baa293ccf2dc7b7002)](https://www.codacy.com/app/DanIsraelMalta/GLSL-CPP?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DanIsraelMalta/GLSL-CPP&amp;utm_campaign=Badge_Grade)
+
 # GLSL++
 
 A generic, modern and extensible numerical toolkit following the syntax and functionality of the GLSL shading language as defined in its [specification.](https://www.khronos.org/registry/OpenGL/specs/gl/)
