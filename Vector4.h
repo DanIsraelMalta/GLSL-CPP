@@ -1020,6 +1020,9 @@ template<typename T> class Vector4 : public VectorBase<T, 4> {
     // constructors
     public:
 
+        // default constructor
+		Vector4() : m_data() {}
+    
         // construct using 1 value
         template<typename U> explicit constexpr Vector4(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : VectorBase<T, 4>(xi_value) { CopyParentData(); }
     
