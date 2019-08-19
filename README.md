@@ -19,6 +19,7 @@ This library is not limited to GLSL features alone, as it include numerous mathe
 * [Functions](#Functions)
 * [Quaternion](#Quaternion)
 * [Interval](#Interval)
+* [Scalar Functions](#Scalar Functions)
 
 ## FAQ
 
@@ -733,6 +734,13 @@ the following run time type traits are available (this is a short list of the mo
 ## Quaternion
 
 ## Interval
+
+## Scalar Functions
+
+The following general scalar functions are available:
+
+* 'exist = SolveQuadratic(a, b, c, x1, x2)'                     - stable numeric solution of a quadratic equation (a*x^2 + b*x + c = 0), where 'x1' is the smaller root and 'x2' is larger root and 'exist' is true only if a solution exists.
+* 'numOfRoots = SolveCubic(b, c, d, VectorBase<T, 6> xo_roots)' - stable numeric solution of a cubic equation (x^3 + b*x^2 + c*x + d = 0), where 'xo_roots' holds three paired solutions in the form (real solution #1, imag solution #1, ...) and 'numOfRoots' is the number of real roots (either 1 or 3)
 
 ## Todo
 ```C
