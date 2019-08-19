@@ -1254,8 +1254,9 @@ namespace GLSLCPP {
     * @param {vectorBase, in}  b (column vector)
     * @param {vectorBase, out} x (column vector)
     **/
-    template<typename T, REQUIRE(is_Cubic<T>::value)>
-    constexpr VectorBase<underlying_type_t<T>, Columns_v<T>> SolveSquareLU(const T& xi_A, const VectorBase<underlying_type_t<T>, Columns_v<T>>& xi_b) noexcept {
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && is_Vector<U>::value && (Length_v<U> == Columns_v<T>) &&
+                                             std::is_same_v<underlying_type_t<T>, underlying_type_t<U>>)>
+    constexpr U SolveSquareLU(const T& xi_A, const U& xi_b) noexcept {
         using _T = underlying_type_t<T>;
         constexpr std::size_t COL{ Columns_v<T> };
         
@@ -1266,7 +1267,7 @@ namespace GLSLCPP {
         LU(xi_A, lowerUpper, piv, sign);
 
         // x is the permuted copy of xi_b as xi_pivot
-        VectorBase<_T, COL> xo_x;
+        U xo_x;
         for (std::size_t i{}; i < COL; ++i) {
             xo_x[i] = xi_b[piv[i]];
         }
@@ -1301,15 +1302,16 @@ namespace GLSLCPP {
     * @param {vectorBase, in}  b (column vector)
     * @param {vectorBase, out} x (column vector)
     **/
-    template<typename T, REQUIRE(is_Cubic<T>::value)>
-    constexpr VectorBase<underlying_type_t<T>, Columns_v<T>> SolveCubicCholesky(const T& xi_A, const VectorBase<underlying_type_t<T>, Columns_v<T>>& xi_b) noexcept {
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value&& is_Vector<U>::value&&
+                                             std::is_same_v<underlying_type_t<T>, underlying_type_t<U>> && (Length_v<U> == Columns_v<T>))>
+        constexpr U SolveCubicCholesky(const T& xi_A, const U& xi_b) noexcept {
         using _T = underlying_type_t<T>;
         constexpr std::size_t COL{ Columns_v<T> };
 
         // Cholesky decomposition
         const T L(Cholesky(xi_A));
 
-        VectorBase<_T, COL> xo_x(xi_b);
+        U xo_x(xi_b);
 
         // Solve L*y = b;
         for (std::size_t k{}; k < COL; ++k) {
@@ -1556,5 +1558,179 @@ namespace GLSLCPP {
         }
         
         return xo_permutation;
-    }   
+    }
+
+    // ---------------------------------------------
+    // --- Specialized Operations for 2x2 matrix ---
+    // ---------------------------------------------
+
+    /**
+    * \brief return the angle which rotates a 2x2 matrix into diagonal form,
+    *        i.e - elements (1, 0) = (0,1) = 0, and elements (0, 0) > (1, 1) are the eigenvalues
+    *
+    * @param {matrixBase, in}  matrix
+    * @param {T,          out} angle [rad]
+    **/
+    template<typename T, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 4))> 
+    constexpr inline underlying_type_t<T> Diagonalizer(const T& xi_mat) noexcept {
+        using _T = underlying_type_t<T>;
+        const _T diff{ xi_mat(1, 1) - xi_mat(0, 0) };
+        return std::atan2(diff + std::sqrt(diff * diff + static_cast<T>(4) * xi_mat(0, 1) * xi_mat(1, 0)), static_cast<T>(2) * xi_mat(1, 0));
+    }
+
+    /**
+    * \brief return 2x2 matrix eigenvalues
+    *
+    * @param {matrixBase, in}  matrix
+    * @param {T,          out} eigenvalue
+    * @param {T,          out} eigenvalue
+    **/
+    template<typename T, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 4))>
+    constexpr inline void EigenValues2x2(const T& xi_mat, underlying_type_t<T>& xo_eigen1, underlying_type_t<T>& xo_eigen2) noexcept {
+        using _T = underlying_type_t<T>;
+
+        const _T diff{ xi_mat(0, 0) - xi_mat(1, 1) },
+                 center{ xi_mat(0, 0) + xi_mat(1, 1) },
+                 delta{ std::sqrt(diff * diff + static_cast<_T>(4) * xi_mat(1, 0) * xi_mat(0, 1)) };
+
+        xo_eigen1 = static_cast<_T>(0.5) * (center + delta);
+        xo_eigen2 = static_cast<_T>(0.5) * (center - delta);
+    }
+
+    /**
+    * \brief return 2x2 matrix eigenvalues and eigenvectors
+    *
+    * @param {matrixBase, in}  matrix
+    * @param {T,          out} eigenvalue #1
+    * @param {T,          out} eigenvalue #2
+    * @param {vectorBase, out} eigenvector #1 (belongs to eigen value #1)
+    * @param {vectorBase, out} eigenvector #2 (belongs to eigen value #2)
+    **/
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 4) &&
+                                             is_Vector<U>::value && (Length_v<U> == 2))> 
+    constexpr inline void EigenSolver2x2(const T& xi_mat, underlying_type_t<T>& xo_eigenvalue0, underlying_type_t<T>& xo_eigenvalue1,
+                                         U& xo_eigenvector0, U& xo_eigenvector1) noexcept {
+        using _T = underlying_type_t<T>;
+
+        EigenValues2x2(xi_mat, xo_eigenvalue0, xo_eigenvalue1);
+
+        xo_eigenvector0 = { static_cast<_T>(-xi_mat(0, 1)), static_cast<_T>(xi_mat(0, 0) - xo_eigenvalue0) };
+        xo_eigenvector1 = { static_cast<_T>(-xi_mat(0, 1)), static_cast<_T>(xi_mat(0, 0) - xo_eigenvalue1) };
+
+        xo_eigenvector0 = Normalize(std::move(xo_eigenvector0));
+        xo_eigenvector1 = Normalize(std::move(xo_eigenvector1));
+    }
+
+    /**
+    * \brief perform SVD decomposition of a SYMMETRIC 2x2 matrix, i.e.:
+    *           A      =      U    *     W     *   U^T
+    *        [ A  B ]  =  [ c  -s ] [ r1   0  ] [  c  s ]
+    *        [ B  C ]     [ s   c ] [  0   r2 ] [ -s  c ]
+    *
+    *        notice that as with any SVD decomposition which does not incorporate sign ambiguity logic,
+    *        this method will output the correct values, but not necessarily the correct signs.
+    *
+    * @param {matrixBase, in}  SYMMETRIC matrix to be decomposed
+    * @param {matrixBase, out} U
+    * @param {vectorBase, out} W (as a vector)
+    **/
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 4) && 
+                                             is_Vector<U>::value && (Length_v<U> == 2))> 
+    constexpr inline void SVDsymmetric2x2(const T& xi_mat, T& xo_U, U& xo_W) noexcept {
+        using _T = underlying_type_t<T>;
+        constexpr _T TOL{ static_cast<_T>(2) * std::numeric_limits<_T>::epsilon() };
+        assert(std::abs(xi_mat(0, 1) - xi_mat(1, 0)) <= TOL && " SVDsymmetric2x2 input matrix is not symmetric.");
+
+        const _T A{ xi_mat(0, 0) },
+                 B{ xi_mat(0, 1) },
+                 C{ xi_mat(1, 1) },
+                 traceSum{ A + C },
+                 traceDiff{ A - C },
+                 rt{ std::sqrt(traceDiff * traceDiff + static_cast<_T>(4) * B * B) };
+        _T r1, r2, c, s, t;
+
+        // eigenvalues
+        if (traceSum > _T{}) {
+            r1 = static_cast<_T>(0.5) * (traceSum + rt);
+            t = static_cast<_T>(1) / (r1);
+            r2 = (A * t) * C - (B * t) * B;
+        }
+        else if (traceSum < _T{}) {
+            r2 = static_cast<_T>(0.5) * (traceSum - rt);
+            t = static_cast<_T>(1) / (r2);
+            r1 = (A * t) * C - (B * t) * B;
+        }
+        else {
+            r1 =  static_cast<_T>(0.5) * rt;
+            r2 = -static_cast<_T>(0.5) * rt;
+        }
+        xo_W[0] = static_cast<_T>(r1);
+        xo_W[1] = static_cast<_T>(r2);
+
+        // eigenvectors
+        c = (traceDiff > _T{}) ? (traceDiff + rt) : (traceDiff - rt);
+
+        if (std::abs(c) > static_cast<_T>(2) * std::abs(B)) {
+            t = -static_cast<_T>(2) * B / c;
+            s = static_cast<_T>(1) / std::sqrt(static_cast<_T>(1) + t * t);
+            c = t * s;
+        }
+        else if (std::abs(B) <= TOL) {
+            c = static_cast<_T>(1);
+            s = _T{};
+        }
+        else {
+            t = -static_cast<_T>(0.5) * c / B;
+            c = static_cast<_T>(1) / std::sqrt(static_cast<_T>(1) + t * t);
+            s = t * c;
+        }
+
+        if (traceDiff > _T{}) {
+            t =  c;
+            c = -s;
+            s =  t;
+        }
+
+        xo_U = { c, s,
+                -s, c };
+    }
+
+    /**
+    * \brief perform polar decomposition (PD) on a given matrix, i.e. A = R * S,
+    *        where R is a rotation matrix in Givens form, S is symmetric describing deformations.
+    *        (a granted negative sign on the small magnitude singular value)
+    *
+    * @param {matrixBase, in}  A
+    * @param {matrixBase, out} R
+    * @param {matrixBase, out} S
+    **/
+    template<typename T, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 4))>
+    constexpr inline void PolarDecomposition2x2(const T& xi_A, T& xo_R, T& xo_S) noexcept {
+        using _T = underlying_type_t<T>;
+
+        const _T x0{ xi_A(0, 0) + xi_A(1, 1) },
+                 x1{ xi_A(0, 1) - xi_A(1, 0) };
+        _T den{ std::sqrt(x0 * x0 + x1 * x1) },
+           c{ static_cast<_T>(1) },
+           s{};
+
+        // R
+        if (std::abs(den) > _T{}) {
+            den = static_cast<_T>(1) / den;
+            c =  x0 * den;
+            s = -x1 * den;
+        }
+        xo_R = { c, s,
+                -s, c };
+
+        // S
+        xo_S = xi_A;
+        static_for<0, 2>([&](std::size_t j) {
+            const _T tau1{ xo_S(j, 0) },
+                     tau2{ xo_S(j, 1) };
+            xo_S(j, 0) = c * tau1 - s * tau2;
+            xo_S(j, 1) = s * tau1 + c * tau2;
+        });
+    }
+
 }; // namespace GLSLCPP
