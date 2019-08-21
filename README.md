@@ -669,7 +669,10 @@ The following specialized functions are availabe for 2x2 matrix:
 
 The following specialized functions are availabe for 3x3 matrix:
 
-* 'MatrixBase FromAxisAngle(Vector xi_axis, T xi_sine, T xi_cosine)' - return a rotation matrix (3x3) from a normalized axis 'xi_axis', and an angle (given by its trigonometric components - 'xi_sine' & 'xi_cosine').
+* 'MatrixBase FromAxisAngle(Vector xi_axis, T xi_sine, T xi_cosine)'   - return a rotation matrix (3x3) from a normalized axis 'xi_axis', and an angle (given by its trigonometric components - 'xi_sine' & 'xi_cosine').
+* 'EigenValues3x3(matrix, xo_eig)'                                     - given a cubic 3x3 matrix 'matrix', return its eigenvalues as elements in vector 'xo_eig'.
+* 'EigenSolverSymmetric3x3(matrix, xo_eigen_values, xo_eigen_vectors)' - given a cubis symmetric 3x3 matrix 'matrix', return its eigenvalues (as 3 element vector) 'xo_eigen_values', and corresponding eigen vectors (as column ins a 3x3 matrix) 'xo_eigen_vectors'.
+
 
 The following specialized functions are availabe for 4x4 matrix:
 
@@ -746,7 +749,7 @@ The following general scalar functions are available:
 ```C
 [] check SVD decomposition for rectangular matrix
 [] implement polar decomposition
-[] implement a bunch of 2x2/3x3/4x4 matrix operations
+[] implement a bunch of 4x4 matrix operations
 [] implement quaternion object
 [] implement interval object
 [] allow VectorBase to become dyanmicly sized.
