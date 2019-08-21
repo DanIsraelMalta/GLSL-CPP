@@ -11,26 +11,26 @@ using namespace GLSLCPP;
 // --- scalar operations test ---
 // ------------------------------
 void ScalarTest() {
-	// second order equation
-	float x1, x2;
-	bool exist0{ SolveQuadratic(3.0f, 7.8f, 6.3f, x1, x2) };
-	assert(exist0 == false);
-	assert(x1 == 0.0f);
-	assert(x2 == 0.0f);
+    // second order equation
+    float x1, x2;
+    bool exist0{ SolveQuadratic(3.0f, 7.8f, 6.3f, x1, x2) };
+    assert(exist0 == false);
+    assert(x1 == 0.0f);
+    assert(x2 == 0.0f);
 
-	exist0 = SolveQuadratic(-3.0f, 7.8f, 6.3f, x1, x2);
-	assert(exist0 == true);
-	assert(x1 == -0.646792233f);
-	assert(x2 == 3.24679255f);
+    exist0 = SolveQuadratic(-3.0f, 7.8f, 6.3f, x1, x2);
+    assert(exist0 == true);
+    assert(x1 == -0.646792233f);
+    assert(x2 == 3.24679255f);
 
-	// third order equation
-	VectorBase<float, 6> roots,
-						 rootseq(-5.63887119f, 0.0f,
-								 0.819435477f, 0.754922748f,
-								 0.819435477f, -0.754922748f);
-	uint32_t n{ SolveCubic(4.0f, -8.0f, 7.0f, roots) };
-	assert(n == 1);
-	assert(roots == rootseq);
+    // third order equation
+    VectorBase<float, 6> roots,
+                         rootseq(-5.63887119f, 0.0f,
+                                 0.819435477f, 0.754922748f,
+                                 0.819435477f, -0.754922748f);
+    uint32_t n{ SolveCubic(4.0f, -8.0f, 7.0f, roots) };
+    assert(n == 1);
+    assert(roots == rootseq);
 }
 
 // ------------------------------------
@@ -2160,6 +2160,7 @@ void MatrixBaseTest() {
                                   15.860483827122826, 
                                   0.60093334524763165);
         bool flag = SVD(a5, us, w, vt);
+        assert(flag == true);
         assert(w == weq);
         assert(vt == vteq);
         assert(us == useq);
@@ -2193,6 +2194,69 @@ void MatrixBaseTest() {
         xc = SolveQR(spd, bc);
         xceq = VectorBase<double, 3>(257.61111111110677, -70.555555555554392, 11.111111111110915);
         assert(xc == xceq);
+    }
+
+    // specialized 2X2 matrix operations
+    {
+        // eigen analysis
+        MatrixBase<double, 2, 2> e( 16, 2,
+                                   -1 , 12);
+        double eig0, eig1;
+        VectorBase<double, 2> eigvec0, eigvec1;
+        EigenSolver2x2(e, eig0, eig1, eigvec0, eigvec1);
+        assert(eig0 == 15.414213562373096);
+        assert(eig1 == 12.585786437626904);
+        assert(std::abs(eigvec0[0]) == 0.95968298226066739);
+        assert(std::abs(eigvec0[1]) == 0.28108463771481990);
+        assert(std::abs(eigvec1[0]) == 0.50544946512442346);
+        assert(std::abs(eigvec1[1]) == 0.86285620946101682);
+
+        EigenSolver2x2(MatrixBase<double, 2, 2>( 13, -12,
+                                                -1 , 9), eig0, eig1, eigvec0, eigvec1);
+        assert(eig0 == 15.0);
+        assert(eig1 == 7.0);
+        assert(std::abs(eigvec0[0]) == 0.98639392383214375); 
+        assert(std::abs(eigvec0[1]) == 0.16439898730535729);
+        assert(std::abs(eigvec1[0]) == 0.89442719099991586);
+        assert(std::abs(eigvec1[1]) == 0.44721359549995793);
+
+        // symmetric 2x2 matrix SVD decomposition
+        mat2 svdsym(2.5f, 3.0f,
+                    3.0f, 1.8f),
+                    U;
+        vec2 W;
+        SVDsymmetric2x2(svdsym, U, W);
+        assert(std::fabs(W.x) == 5.17034817f);
+        assert(std::fabs(W.y) == 0.870347679f);
+        assert(std::fabs(U(0, 0)) == 0.746954083f);
+        assert(std::fabs(U(0, 1)) == 0.664875627f);
+        assert(std::fabs(U(1, 0)) == 0.664875627f);
+        assert(std::fabs(U(1, 1)) == 0.746954083f);
+        
+        // 2x2 polar decomposition
+        mat2 R, S;
+        PolarDecomposition2x2(svdsym, R, S);
+        assert(svdsym == R * S);
+    }
+
+    // specialized 3X3 matrix operations
+    {
+        dmat3 a( 16.0, -2.0,   6.9,
+                 -2.0,  12.0,  13.0,
+                  6.9,  13.0, -24.0),
+              eigvec;
+        dvec3 eigs,
+              v0(0.15642440790811135, 0.30316303791143051, 0.94001254090299724),
+              v1(0.96438633854509959, 0.15863880657751017, 0.21164290461822713),
+              v2(0.21328477357320552, 0.93964136855077618, 0.26755131072347732);
+        EigenSolverSymmetric3x3(a, eigs, eigvec);
+
+        assert(std::abs(eigs.x) == 29.340830775078608);
+        assert(std::abs(eigs.y) == 17.185270241836061);
+        assert(std::abs(eigs.z) == 16.155560533242546);
+        assert(abs(eigvec[0]) == v0);
+        assert(abs(eigvec[0]) == v0);
+        assert(abs(eigvec[0]) == v0);
     }
 
     std::cout << "MatrixBase test successfully finished." << std::endl;
