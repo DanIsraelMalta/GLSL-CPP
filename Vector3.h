@@ -210,7 +210,7 @@ namespace GLSLCPP {
         // assignment from another VectorBase child
         template<typename U, std::size_t M, REQUIRE(M >= 3)> constexpr Vector3& operator=(VectorBase<U, M>&& v) noexcept {
             for_each(m_data, [this, i = 0, temp = FWD(v)](auto & elm) mutable {
-                elm = temp[i];
+                elm = static_cast<T>(temp[i]);
                 ++i;
             });
 
