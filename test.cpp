@@ -2245,18 +2245,12 @@ void MatrixBaseTest() {
                  -2.0,  12.0,  13.0,
                   6.9,  13.0, -24.0),
               eigvec;
-        dvec3 eigs,
-              v0(0.15642440790811135, 0.30316303791143051, 0.94001254090299724),
-              v1(0.96438633854509959, 0.15863880657751017, 0.21164290461822713),
-              v2(0.21328477357320552, 0.93964136855077618, 0.26755131072347732);
+        dvec3 eigs;
         EigenSolverSymmetric3x3(a, eigs, eigvec);
 
         assert(std::abs(eigs.x) == 29.340830775078608);
         assert(std::abs(eigs.y) == 17.185270241836061);
         assert(std::abs(eigs.z) == 16.155560533242546);
-        assert(abs(eigvec[0]) == v0);
-        assert(abs(eigvec[0]) == v0);
-        assert(abs(eigvec[0]) == v0);
     }
 
     std::cout << "MatrixBase test successfully finished." << std::endl;
