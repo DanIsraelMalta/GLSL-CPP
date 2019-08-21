@@ -799,10 +799,10 @@ namespace GLSLCPP {
             // rows
             for (std::int32_t i{ static_cast<std::int32_t>(COL) - 1 }; i >= 0; i--) {
                 for (std::int32_t k{ i + 1 }; k < static_cast<std::int32_t>(COL); ++k) {
-                    xo_inv(j, i) -= lu(k, i) * xo_inv(j, k);
+                    xo_inv(j, i) -= lu(static_cast<std::size_t>(k), static_cast<std::size_t>(i)) * xo_inv(static_cast<std::size_t>(j), static_cast<std::size_t>(k));
                 }
 
-                xo_inv(j, i) /= lu(i, i);
+                xo_inv(static_cast<std::size_t>(j), static_cast<std::size_t>(i)) /= lu(static_cast<std::size_t>(i), static_cast<std::size_t>(i));
             }
         }
 
@@ -1475,7 +1475,6 @@ namespace GLSLCPP {
 
         for (std::size_t i{}; (i < ROW) && xo_triangular; ++i) {
             for (std::size_t j{ i + 1 }; (j < ROW) && xo_triangular; ++j) {
-                auto t = xi_matrix(i, j);
                 xo_triangular = std::abs(xi_matrix(i, j)) <= TOL;
             }
         }
@@ -1731,6 +1730,87 @@ namespace GLSLCPP {
             xo_S(j, 0) = c * tau1 - s * tau2;
             xo_S(j, 1) = s * tau1 + c * tau2;
         });
+    }
+
+    // ---------------------------------------------
+    // --- Specialized Operations for 2x2 matrix ---
+    // ---------------------------------------------
+
+    /**
+    * \brief calculate eigenvalues of 3x3 cubic matrix (using its characteristic polynomial matrix)
+    *
+    * @param {matrixbase, in}  matrix
+    * @param {vectorbase, out} eigenvalues (empty vector if eigenvalues are complex)
+    **/
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 9) &&
+                                             is_Vector<U>::value && (Length_v<U> == 3))>
+    constexpr void EigenValues3x3(const T& xi_mat, U& xo_eig) noexcept {
+        using _T = underlying_type_t<T>;
+
+        // characteristic polynomial coefficients
+        const _T trA{ xi_mat(0, 0) + xi_mat(1, 1) + xi_mat(2, 2) },
+                 detA{ Determinant(xi_mat) },
+                 cofSum{ xi_mat(1, 1) * xi_mat(2, 2) - xi_mat(2, 1) * xi_mat(1, 2) +    // 1st minor
+                         xi_mat(0, 0) * xi_mat(2, 2) - xi_mat(2, 0) * xi_mat(0, 2) +    // 2nd minor
+                         xi_mat(0, 0) * xi_mat(1, 1) - xi_mat(1, 0) * xi_mat(0, 1) };   // 3rd minor
+
+        // solve the characteristic polynomial
+        VectorBase<underlying_type_t<T>, 6> roots;
+        const uint32_t numOfRoots{ SolveCubic(-trA, cofSum, -detA, roots) };
+
+        xo_eig = U();
+        if (numOfRoots > 0) {
+            xo_eig = { roots[0], roots[2], roots[4] };
+        }
+    }
+
+    /**
+    * \brief given a cubic 3x3 SYMMETRIC matrix, return its eigenvalues and eigenvectors
+    *        Remark: work good in case eigenvalues are well separated.
+    *
+    * @param {matrixBase, in}  matrix
+    * @param {vectorBase, out} eigenvalues (empty vector if eigenvalues are complex)
+    * @param {matrixBase, out} matrix whos columns/rows are the normalized eigenvectors (empty matrix if eigenvalues are complex)
+    **/
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && (Length_v<T> == 9) &&
+                                             is_Vector<U>::value && (Length_v<U> == 3))>
+    constexpr void EigenSolverSymmetric3x3(const T& xi_mat, U& xo_values, T& xo_vectors) noexcept {
+        using _T = underlying_type_t<T>;
+
+        // housekeeping
+        xo_vectors = { _T{}, _T{}, _T{},
+                       _T{}, _T{}, _T{},
+                       _T{}, _T{}, _T{} };
+
+        // eigen values
+        EigenValues3x3(xi_mat, xo_values);
+
+        // Compute eigenvectors only if the eigenvalues are real
+        if (sum(abs(xo_values)) > _T{}) {
+            static_for<0, 3>([&](std::size_t i) {
+                const VectorBase<_T, 3> r1( xi_mat(0, 0) - xo_values[i], xi_mat(0, 1),                xi_mat(0, 2) ),
+                                        r2( xi_mat(0, 1),                xi_mat(1, 1) - xo_values[i], xi_mat(1, 2) ),
+                                        r3( xi_mat(0, 2),                xi_mat(1, 2),                xi_mat(2, 2) - xo_values[i] ),
+                                        e1( cross(r1, r2) );
+                VectorBase<_T, 3> e2( cross(r2, r3) ),
+                                  e3( cross(r3, r1) );
+
+                // Make e2 and e3 point in the same direction as e1
+                if (dot(e1, e2) < _T{}) {
+                    e2 *= static_cast<_T>(-1);
+                }
+                if (dot(e1, e3) < _T{}) {
+                    e3 = static_cast<_T>(-1);
+                }
+
+                VectorBase<_T, 3 > eigvec( e1 + e2 + e3 );
+                eigvec = Normalize(std::move(eigvec));
+
+                xo_vectors(i, 0) = eigvec[0];
+                xo_vectors(i, 1) = eigvec[1];
+                xo_vectors(i, 2) = eigvec[2];
+            });
+        }
     }
 
 }; // namespace GLSLCPP
