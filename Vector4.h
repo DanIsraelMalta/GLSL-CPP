@@ -1128,7 +1128,7 @@ template<typename T> class Vector4 : public VectorBase<T, 4> {
         // assignment from another VectorBase child
         template<typename U, std::size_t M, REQUIRE(M >= 4)> constexpr Vector4& operator=(VectorBase<U, M>&& v) noexcept {
             for_each(m_data, [this, i = 0, temp = FWD(v)](auto& elm) mutable {
-                elm = temp[i];
+                elm = static_cast<T>(temp[i]);
                 ++i;
             });
 
