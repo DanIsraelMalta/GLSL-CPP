@@ -95,7 +95,7 @@ namespace GLSLCPP {
 
         template<typename U, std::size_t M, REQUIRE(M >= 2)> constexpr Vector2& operator=(VectorBase<U, M>&& v) noexcept {
             for_each(m_data, [this, i = 0, temp = FWD(v)](auto & elm) mutable {
-                elm = temp[i];
+                elm = static_cast<T>(temp[i]);
                 ++i;
             });
 
