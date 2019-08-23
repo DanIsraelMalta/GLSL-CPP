@@ -23,7 +23,7 @@ namespace GLSLCPP {
     **/
     template<class VECTOR, typename T, std::size_t N, bool Unique, std::size_t... Indexes> class Swizzle {
         static_assert(std::is_arithmetic<T>::value, "Swizzle must operate on arithmetic types.");
-        static_assert(is_VectorBase_v<VECTOR>, "Swizzle must operate on objects of type VectorBase.");
+        static_assert(is_Vector<VECTOR>::value, "Swizzle must operate on objects of type VectorBase.");
         static_assert(N == sizeof...(Indexes), "Swizzle must operate on objects of type VectorBase.");
 
         // properties
@@ -39,13 +39,31 @@ namespace GLSLCPP {
         Swizzle(Swizzle&&)            noexcept = default;
         Swizzle& operator=(Swizzle&&) noexcept = default;
 
-        // no copy semantics or move assignments from vectors
-        template<typename U> Swizzle(const VectorBase<U, N>&)                = delete;
-        template<typename U> Swizzle& operator=(const VectorBase<U, N>&)     = delete;
-        template<typename U> Swizzle& operator=(VectorBase<U, N>&&) noexcept = delete;
+        // copy semantics with vectors
+        template<typename U> Swizzle(const U& xi_rhs, REQUIRE(Is_VectorOfLength_v<U, N>)) {
+            constexpr std::size_t indexes[] = { Indexes... };
 
-        // only move constructor vectors
-        template<typename U> explicit constexpr Swizzle(VectorBase<U, N>&& xi_rhs) noexcept {
+            static_for<0, N>([&](std::size_t i) {
+                const std::size_t index{ indexes[i] };
+                assert(index < N && " Swizzle indices's are defined such that they point to non existent members, i.e. - they are larger then N.");
+                m_pack[index] = static_cast<T>(xi_rhs[i]);
+            });
+        }
+
+        template<typename U, REQUIRE(Is_VectorOfLength_v<U, N>)> Swizzle& operator=(const U& xi_rhs) {
+            constexpr std::size_t indexes[] = { Indexes... };
+
+            static_for<0, N>([&](std::size_t i) {
+                const std::size_t index{ indexes[i] };
+                assert(index < N && " Swizzle indices's are defined such that they point to non existent members, i.e. - they are larger then N.");
+                m_pack[index] = static_cast<T>(xi_rhs[i]);
+            });
+
+            return *this;
+        }
+
+        // move semantics with vectors
+        template<typename U> explicit constexpr Swizzle(U&& xi_rhs, REQUIRE(Is_VectorOfLength_v<U, N>)) noexcept {
             constexpr std::size_t indexes[] = { Indexes... };
             auto rhs = FWD(xi_rhs);
 
@@ -54,6 +72,19 @@ namespace GLSLCPP {
                 assert(index < N && " Swizzle indices's are defined such that they point to non existent members, i.e. - they are larger then N.");
                 m_pack[index] = static_cast<T>(rhs[i]);
             });
+        }
+
+        template<typename U, REQUIRE(Is_VectorOfLength_v<U, N>)> Swizzle& operator=(U&& xi_rhs) noexcept {
+            constexpr std::size_t indexes[] = { Indexes... };
+            auto rhs = FWD(xi_rhs);
+
+            static_for<0, N>([&](std::size_t i) {
+                const std::size_t index{ indexes[i] };
+                assert(index < N && " Swizzle indices's are defined such that they point to non existent members, i.e. - they are larger then N.");
+                m_pack[index] = static_cast<T>(rhs[i]);
+            });
+
+            return *this;
         }
 
         // methods
@@ -136,10 +167,10 @@ namespace GLSLCPP {
             });                                                                                                             \
             return *this;                                                                                                   \
         }                                                                                                                   \
-        template<typename U, bool unq = Unique, REQUIRE(unq == true)>                                                       \
-        Swizzle& operator OP (const VectorBase<U, N>& xi_rhs) {                                                             \
+        template<typename U, bool unq = Unique, REQUIRE(unq == true && Is_VectorOfLength_v<U, N>)>                          \
+        Swizzle& operator OP (const U& xi_rhs) {                                                                            \
             constexpr std::size_t indexes[] = { Indexes... };                                                               \
-            auto rhs = FWD(static_cast<VectorBase<U, N>>(xi_rhs));                                                          \
+            auto rhs = FWD(static_cast<U>(xi_rhs));                                                                         \
             static_for<0, N>([&](std::size_t i) {                                                                           \
                 m_pack[indexes[i]] OP static_cast<T>(rhs[i]);                                                               \
             });                                                                                                             \
