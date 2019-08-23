@@ -752,7 +752,6 @@ The following general scalar functions are available:
 [] implement quaternion object
 [] implement interval object
 [] allow VectorBase to become dyanmicly sized.
-[] move from the standard inheritance model to static one (i.e. - CRTP).
 [] move from SFINEA to c++20 concepts.
 [] use c++20 SIMD operations.
 ```
