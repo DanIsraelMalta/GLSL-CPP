@@ -124,6 +124,9 @@ void VectorBaseTest() {
         d = d * 2;
         assert((static_cast<int>(d[0]) == 2) && (static_cast<int>(d[1]) == 4) && (static_cast<int>(d[2]) == 6));
 
+        d = d - 2;
+        assert((static_cast<int>(d[0]) == 0) && (static_cast<int>(d[1]) == 2) && (static_cast<int>(d[2]) == 4));
+
         auto cc = -c;
         assert((static_cast<int>(cc[0]) == -1) && (static_cast<int>(cc[1]) == -1) && (static_cast<int>(cc[2]) == -1));
 
@@ -452,7 +455,7 @@ void Vector2Test() {
                        f4 = f1,
                        f5 = f2.yx,
                        f6 = VectorBase<int, 2>(5, 6),
-                       f7 = Vector2<int>(7, 8);
+                       f7 = Vector2<float>(7, 8);
 
         assert((static_cast<int>(f1.x) == 1) && (static_cast<int>(f1.y) == 2));
         assert((static_cast<int>(f2.x) == 3) && (static_cast<int>(f2.y) == 4));
@@ -775,7 +778,7 @@ void Vector3Test() {
                        f4 = f1,
                        f5 = f2.yxz,
                        f6 = VectorBase<int, 3>(5, 6, 7),
-                       f7 = Vector3<int>(7, 8, 9);
+                       f7 = Vector3<float>(7, 8, 9);
 
         assert((static_cast<int>(f1.x) == 1) && (static_cast<int>(f1.y) == 2) && (static_cast<int>(f1.z) == 3));
         assert((static_cast<int>(f2.x) == 3) && (static_cast<int>(f2.y) == 4) && (static_cast<int>(f2.z) == 5));
@@ -1099,7 +1102,7 @@ void Vector4Test() {
                        f4 = f1,
                        f5 = f2.wyxz,
                        f6 = VectorBase<int, 4>(5, 6, 7, 8),
-                       f7 = Vector4<int>(7, 8, 9, 10);
+                       f7 = Vector4<float>(7, 8, 9, 10);
 
         assert((static_cast<int>(f1.x) == 1) && (static_cast<int>(f1.y) == 2) && (static_cast<int>(f1.z) == 3) && (static_cast<int>(f1.w) == 4));
         assert((static_cast<int>(f2.x) == 3) && (static_cast<int>(f2.y) == 4) && (static_cast<int>(f2.z) == 5) && (static_cast<int>(f2.w) == 6));
@@ -1467,6 +1470,14 @@ void MatrixBaseTest() {
         __c = fromColumn[2];
         __col = ivec4(9, 9, 9, 9);
         assert(__c == __col);
+
+        // test row geters
+        MatrixBase<int, 3, 3> grow(1, 2, 3,
+                                   4, 5, 6,
+                                   7, 8, 9);
+        VectorBase<int, 3> gr1 = GetRow(grow, 1);
+        ivec3 gr2 = GetRow(grow, 1);
+        assert(gr1 == gr2);
     }
 
     // element wise operations with scalars
