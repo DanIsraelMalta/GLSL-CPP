@@ -20,12 +20,12 @@ namespace GLSLCPP {
     *
     * @param {T, in} underlying type
     **/
-    template<typename T> class Vector2 : public VectorBase<T, 2> {
+    template<typename T> union Vector2 {
 
         // data structure
     public:
         union {
-            alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) std::array<T, 2> m_data{};
+            VectorBase<T, 2> m_data{};
 
             struct alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) { T x, y; };
             struct alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) { T r, g; };
@@ -47,19 +47,6 @@ namespace GLSLCPP {
             Swizzle<VectorBase<T, 2>, T, 2, false, 1, 1> tt;
         };
 
-        // internal helper
-    private:
-
-        // get parent properties
-        void CopyParentData() noexcept {
-            std::copy(VectorBase<T, 2>::m_data.begin(), VectorBase<T, 2>::m_data.end(), Vector2::m_data.begin());
-        }
-
-        // fill Vector2 from VectorBase
-        void FromVectorBase(VectorBase<T, 2>&& xi_base) noexcept {
-            m_data = std::move(xi_base.m_data);
-        }
-
         // query operations
     public:
 
@@ -70,36 +57,44 @@ namespace GLSLCPP {
     public:
 
         // default constructor
-		Vector2() : m_data() {}
-        
+        Vector2() : m_data() {}
+
         // construct using 1 value
-        template<typename U> explicit constexpr Vector2(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : VectorBase<T, 2>(xi_value) { CopyParentData(); }
+        template<typename U> explicit constexpr Vector2(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : m_data(xi_value) {}
 
         // construct using 2 values (of same type)
-        template<typename ...Us, REQUIRE((sizeof...(Us) == 2) && Are_ArithmeticConvertible<T, Us...>::value)> explicit constexpr Vector2(Us... xi_values) : VectorBase<T, 2>(xi_values...) { CopyParentData(); }
+        template<typename ...Us, REQUIRE((sizeof...(Us) == 2) && Are_ArithmeticConvertible<T, Us...>::value)> explicit constexpr Vector2(Us... xi_values) : m_data(xi_values...) {}
 
         // construct using 2 values (of different type)
         template<typename U, typename V> explicit constexpr Vector2(const U u, const V v, REQUIRE(Are_ArithmeticConvertible<T, U, V>::value)) :
-            VectorBase<T, 2>(static_cast<T>(u), static_cast<T>(v)) { CopyParentData(); }
+            m_data(static_cast<T>(u), static_cast<T>(v)) {}
 
         // construct from a swizzle
-        template<typename U> explicit constexpr Vector2(U&& s, REQUIRE(is_SwizzleOfLength_v<U, 2>)) : VectorBase<T, 2>(std::forward<U>(s)) { CopyParentData(); }
+        template<typename U> explicit constexpr Vector2(U&& s, REQUIRE(is_SwizzleOfLength_v<U, 2>)) : m_data(std::forward<U>(s)) {}
 
-        // cast as VectorBase
-        operator VectorBase<T, 2>() const {
-            return VectorBase<T, 2>(m_data);
+        // construct from a different type vector
+        template<typename U> explicit constexpr Vector2(const U& v, REQUIRE(Is_VectorOfLength_v<U, 2>)) {
+            static_for<0, 2>([&](std::size_t i) {
+                m_data[i] = static_cast<T>(v[i]);
+            });
+        }
+        template<typename U> explicit constexpr Vector2(U&& v, REQUIRE(Is_VectorOfLength_v<U, 2>)) noexcept {
+            static_for<0, 2>([&](std::size_t i) {
+                m_data[i] = static_cast<T>(std::move(v[i]));
+            });
         }
 
-        // assignments
-    public:
+        // copy semantics
+        Vector2(const Vector2&)            = default;
+        Vector2& operator=(const Vector2&) = default;
 
-        template<typename U, std::size_t M, REQUIRE(M >= 2)> constexpr Vector2& operator=(VectorBase<U, M>&& v) noexcept {
-            for_each(m_data, [this, i = 0, temp = FWD(v)](auto & elm) mutable {
-                elm = static_cast<T>(temp[i]);
-                ++i;
-            });
+        // move semantics
+        Vector2(Vector2&&)            noexcept = default;
+        Vector2& operator=(Vector2&&) noexcept = default;
 
-            return *this;
+        // cast as VectorBase
+        template<typename U> operator VectorBase<U, 2>() const {
+            return VectorBase<U, 2>(static_cast<U>(x), static_cast<U>(y));
         }
 
         // access operator overloading
@@ -107,45 +102,77 @@ namespace GLSLCPP {
 
         // '[]' element access
         constexpr T  operator[](const std::size_t i) const { assert(i < 2); return m_data[i]; }
-        constexpr T& operator[](const std::size_t i) { assert(i < 2); return m_data[i]; }
+        constexpr T& operator[](const std::size_t i)       { assert(i < 2); return m_data[i]; }
 
         // get pointer to vector internal storage
-        constexpr       T* data() { return m_data; }
-        constexpr const T* data() const { return m_data; }
+        constexpr       T* data()       { return m_data; }
+        constexpr const T* data() const { return m_data; } 
 
         // iterators
     public:
 
-        auto begin()   noexcept -> decltype(m_data.begin()) { return m_data.begin(); }
-        auto rbegin()  noexcept -> decltype(m_data.rbegin()) { return m_data.rbegin(); }
-        auto cbegin()  noexcept -> decltype(m_data.cbegin()) { return m_data.cbegin(); }
+        auto begin()   noexcept -> decltype(m_data.begin())   { return m_data.begin();   }
+        auto rbegin()  noexcept -> decltype(m_data.rbegin())  { return m_data.rbegin();  }
+        auto cbegin()  noexcept -> decltype(m_data.cbegin())  { return m_data.cbegin();  }
         auto crbegin() noexcept -> decltype(m_data.crbegin()) { return m_data.crbegin(); }
 
-        auto end()   noexcept -> decltype(m_data.end()) { return m_data.end(); }
-        auto rend()  noexcept -> decltype(m_data.rend()) { return m_data.rend(); }
-        auto cend()  noexcept -> decltype(m_data.cend()) { return m_data.cend(); }
+        auto end()   noexcept -> decltype(m_data.end())   { return m_data.end();   }
+        auto rend()  noexcept -> decltype(m_data.rend())  { return m_data.rend();  }
+        auto cend()  noexcept -> decltype(m_data.cend())  { return m_data.cend();  }
         auto crend() noexcept -> decltype(m_data.crend()) { return m_data.crend(); }
+
+        // stream operator overloading
+    public:
+
+        // output vector to stream
+        friend std::ostream& operator<<(std::ostream& xio_stream, Vector2& xi_vector) {
+            return xio_stream << xi_vector.m_data;
+        }
+
+        // read the space-separated components of a vector from a stream
+        friend std::istream& operator>>(std::istream& is, Vector2& xi_vector) {
+            if (isVectorLalue(xi_vector)) {
+                for (std::size_t i{}; i < 2; ++i) {
+                    is >> xi_vector[i];
+                }
+            }
+            else {
+                for (std::size_t i{}; i < 2; ++i) {
+                    is >> std::move(xi_vector[i]);
+                }
+            }
+
+            return is;
+        }
+
         // compound operator overloading
     public:
 
 #define M_OPERATOR(OP)                                                                                  \
         template<typename U, REQUIRE(is_ArithmeticConvertible_v<U, T>)>                                 \
         constexpr Vector2& operator OP (const U xi_value) {                                             \
-            FromVectorBase(std::move(VectorBase<T,2>(*this) OP xi_value));                              \
+            m_data OP xi_value;                                                                         \
+            return *this;                                                                               \
+        }                                                                                               \
+        template<typename U> constexpr Vector2& operator OP (const Vector2<U>& xi_vector) {             \
+            m_data OP xi_vector.m_data;                                                                 \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U> constexpr Vector2& operator OP (Vector2<U>&& xi_vector) {                  \
-            FromVectorBase(std::move(VectorBase<T,2>(*this) OP std::move(xi_vector)));                  \
+            m_data OP std::move(xi_vector.m_data);                                                      \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U> constexpr Vector2& operator OP (const VectorBase<U, 2>& xi_vector) {       \
-            auto _vec = FWD(static_cast<VectorBase<U, 2>>(xi_vector));                                  \
-            FromVectorBase(std::move(VectorBase<T,2>(*this) OP _vec));                                  \
+            m_data OP xi_vector;                                                                        \
+            return *this;                                                                               \
+        }                                                                                               \
+        template<typename U> constexpr Vector2& operator OP (VectorBase<U, 2>&& xi_vector) {            \
+            m_data OP std::move(xi_vector);                                                             \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U, REQUIRE(is_SwizzleOfLength_v<U, 2>)>                                       \
         constexpr Vector2& operator OP (U& s) {                                                         \
-            FromVectorBase(std::move(VectorBase<T,2>(*this) OP s));                                     \
+            m_data OP s;                                                                                \
             return *this;                                                                               \
         }
 
