@@ -20,12 +20,12 @@ namespace GLSLCPP {
 *
 * @param {T, in} underlying type
 **/
-template<typename T> class Vector4 : public VectorBase<T, 4> {
+template<typename T> union Vector4 {
 
     // data structure
     public:
         union {
-            alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) std::array<T, 4> m_data{};
+            VectorBase<T, 4> m_data{};
     
             struct alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) { T x, y, z, w; };
             struct alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) { T r, g, b, a; };
@@ -998,19 +998,6 @@ template<typename T> class Vector4 : public VectorBase<T, 4> {
             Swizzle<VectorBase<T, 4>, T, 4, false, 3, 3, 3, 3> qqqq;
         };
 
-    // internal helper
-    private:
-
-        // get parent properties
-        void CopyParentData() noexcept {
-            std::copy(VectorBase<T, 4>::m_data.begin(), VectorBase<T, 4>::m_data.end(), Vector4::m_data.begin());
-        }
-
-        // fill Vector2 from VectorBase
-        void FromVectorBase(VectorBase<T, 4>&& xi_base) noexcept {
-            m_data = std::move(xi_base.m_data);
-        }
-
     // query operations
     public:
 
@@ -1021,82 +1008,82 @@ template<typename T> class Vector4 : public VectorBase<T, 4> {
     public:
 
         // default constructor
-		Vector4() : m_data() {}
-    
+        Vector4() : m_data() {}
+
         // construct using 1 value
-        template<typename U> explicit constexpr Vector4(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : VectorBase<T, 4>(xi_value) { CopyParentData(); }
+        template<typename U> explicit constexpr Vector4(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : m_data(xi_value) {}
     
         // construct using 4 values (of same type)
-        template<typename ...Us, REQUIRE((sizeof...(Us) == 4) && Are_ArithmeticConvertible<T, Us...>::value)> explicit constexpr Vector4(Us... xi_values) : VectorBase<T, 4>(xi_values...) { CopyParentData(); }
+        template<typename ...Us, REQUIRE((sizeof...(Us) == 4) && Are_ArithmeticConvertible<T, Us...>::value)> explicit constexpr Vector4(Us... xi_values) : m_data(xi_values...) {}
     
         // construct using 4 values (of different type)
         template<typename U, typename V, typename W, typename R> explicit constexpr Vector4(const U u, const V v, const W w, const R r,
                  REQUIRE(Are_ArithmeticConvertible<T, U, V, W, R>::value)) :
-        VectorBase<T, 4>(static_cast<T>(u), static_cast<T>(v), static_cast<T>(w), static_cast<T>(r)) { CopyParentData(); }
+            m_data(static_cast<T>(u), static_cast<T>(v), static_cast<T>(w), static_cast<T>(r)) {}
     
         // construct using any combination of VectorBase<U,2> child and scalar/VectorBase<U,2>/swizzle
-        template<typename U, typename V, typename W> explicit constexpr Vector4(const VectorBase<U, 2>& vec, const V v, const W w,
-                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value)) :
-        VectorBase<T, 4>(static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(v), static_cast<T>(w)) { CopyParentData(); }
+        template<typename U, typename V, typename W> explicit constexpr Vector4(const U& vec, const V v, const W w,
+                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(v), static_cast<T>(w)) {}
     
-        template<typename U, typename V, typename W> explicit constexpr Vector4(VectorBase<U, 2>&& vec, const V v, const W w,
-                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value)) :
-        VectorBase<T, 4>(static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(v), static_cast<T>(w)) { CopyParentData(); }
+        template<typename U, typename V, typename W> explicit constexpr Vector4(U&& vec, const V v, const W w,
+                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(v), static_cast<T>(w)) {}
 
-        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, const VectorBase<U, 2>& vec, const W w,
-                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value)) :
-        VectorBase<T, 4>(static_cast<T>(v), static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(w)) { CopyParentData(); }
+        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, const U& vec, const W w,
+                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(v), static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(w)) {}
 
-        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, VectorBase<U, 2>&& vec, const W w,
-                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value)) :
-        VectorBase<T, 4>(static_cast<T>(v), static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(w)) { CopyParentData(); }
+        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, U&& vec, const W w,
+                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(v), static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(w)) {}
 
-        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, const W w, const VectorBase<U, 2>& vec,
-                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value)) :
-        VectorBase<T, 4>(static_cast<T>(v), static_cast<T>(w), static_cast<T>(vec[0]), static_cast<T>(vec[1])) { CopyParentData(); }
+        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, const W w, const U& vec,
+                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(v), static_cast<T>(w), static_cast<T>(vec[0]), static_cast<T>(vec[1])) {}
 
-        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, const W w, VectorBase<U, 2>&& vec,
-                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value)) :
-        VectorBase<T, 4>(static_cast<T>(v), static_cast<T>(w), static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1]))) { CopyParentData(); }
+        template<typename U, typename V, typename W> explicit constexpr Vector4(const V v, const W w, U&& vec,
+                 REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(v), static_cast<T>(w), static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1]))) {}
 
         // construct using a combination of VectorBase<U,2>/VectorBase<U,2>
-        template<typename U, typename V> explicit constexpr Vector4(const VectorBase<U, 2>& vec0, const VectorBase<V, 2>& vec1) :
-        VectorBase<T, 4>(static_cast<T>(vec0[0]), static_cast<T>(vec0[1]), static_cast<T>(vec1[0]), static_cast<T>(vec1[1])) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(const U& vec0, const V& vec1, REQUIRE(Is_VectorOfLength_v<V, 2> && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(vec0[0]), static_cast<T>(vec0[1]), static_cast<T>(vec1[0]), static_cast<T>(vec1[1])) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(VectorBase<U, 2>&& vec0, const VectorBase<V, 2>& vec1) :
-        VectorBase<T, 4>(static_cast<T>(std::move(vec0[0])), static_cast<T>(std::move(vec0[1])), static_cast<T>(vec1[0]), static_cast<T>(vec1[1])) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(U&& vec0, const V& vec1, REQUIRE(Is_VectorOfLength_v<V, 2> && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(std::move(vec0[0])), static_cast<T>(std::move(vec0[1])), static_cast<T>(vec1[0]), static_cast<T>(vec1[1])) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(const VectorBase<U, 2>& vec0, VectorBase<V, 2>&& vec1) :
-        VectorBase<T, 4>(static_cast<T>(vec0[0]), static_cast<T>(vec0[1]), static_cast<T>(std::move(vec1[0])), static_cast<T>(std::move(vec1[1]))) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(const U& vec0, V&& vec1, REQUIRE(Is_VectorOfLength_v<V, 2> && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(vec0[0]), static_cast<T>(vec0[1]), static_cast<T>(std::move(vec1[0])), static_cast<T>(std::move(vec1[1]))) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(VectorBase<U, 2>&& vec0, VectorBase<V, 2>&& vec1) :
-        VectorBase<T, 4>(static_cast<T>(std::move(vec0[0])), static_cast<T>(std::move(vec0[1])), static_cast<T>(std::move(vec1[0])), static_cast<T>(std::move(vec1[1]))) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(U&& vec0, V&& vec1, REQUIRE(Is_VectorOfLength_v<V, 2> && Is_VectorOfLength_v<U, 2>)) :
+        m_data(static_cast<T>(std::move(vec0[0])), static_cast<T>(std::move(vec0[1])), static_cast<T>(std::move(vec1[0])), static_cast<T>(std::move(vec1[1]))) {}
 
         // construct using any combination of VectorBase<U,3> child and scalar
-        template<typename U, typename V> explicit constexpr Vector4(const VectorBase<U, 3>& vec, const V s, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
-        VectorBase<T, 4>(static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(vec[2]), static_cast<T>(s)) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(const U& vec, const V s, REQUIRE(is_ArithmeticConvertible_v<V, T> && Is_VectorOfLength_v<U, 3>)) :
+        m_data(static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(vec[2]), static_cast<T>(s)) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(VectorBase<U, 3>&& vec, const V s, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
-        VectorBase<T, 4>(static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(std::move(vec[2])), static_cast<T>(s)) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(U&& vec, const V s, REQUIRE(is_ArithmeticConvertible_v<V, T> && Is_VectorOfLength_v<U, 3>)) :
+        m_data(static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(std::move(vec[2])), static_cast<T>(s)) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(const V s, const VectorBase<U, 3>& vec, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
-        VectorBase<T, 4>(static_cast<T>(s), static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(vec[2])) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(const V s, const U& vec, REQUIRE(is_ArithmeticConvertible_v<V, T> && Is_VectorOfLength_v<U, 3>)) :
+        m_data(static_cast<T>(s), static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(vec[2])) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(const V s, VectorBase<U, 3>&& vec, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
-        VectorBase<T, 4>(static_cast<T>(s), static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(std::move(vec[2]))) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector4(const V s, U&& vec, REQUIRE(is_ArithmeticConvertible_v<V, T> && Is_VectorOfLength_v<U, 3>)) :
+            m_data(static_cast<T>(s), static_cast<T>(std::move(vec[0])), static_cast<T>(std::move(vec[1])), static_cast<T>(std::move(vec[2]))) {}
 
         // construct using a combination of VectorBase<U,2>/swizzle
-        template<typename U, typename V> explicit constexpr Vector4(const VectorBase<V, 2>& vec, U& swiz, REQUIRE(is_SwizzleOfLength_v<U, 2>)) :
+        template<typename U, typename V> explicit constexpr Vector4(const V& vec, U& swiz, REQUIRE(is_SwizzleOfLength_v<U, 2> && Is_VectorOfLength_v<V, 2>)) :
         Vector4<T>(vec, VectorBase<T, 2>(swiz)) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(VectorBase<V, 2>&& vec, U& swiz, REQUIRE(is_SwizzleOfLength_v<U, 2>)) :
+        template<typename U, typename V> explicit constexpr Vector4(V&& vec, U& swiz, REQUIRE(is_SwizzleOfLength_v<U, 2> && Is_VectorOfLength_v<V, 2>)) :
         Vector4<T>(std::move(vec), VectorBase<T, 2>(swiz)) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(U& swiz, const VectorBase<V, 2>& vec, REQUIRE(is_SwizzleOfLength_v<U, 2>)) :
+        template<typename U, typename V> explicit constexpr Vector4(U& swiz, const V& vec, REQUIRE(is_SwizzleOfLength_v<U, 2> && Is_VectorOfLength_v<V, 2>)) :
         Vector4<T>(VectorBase<T, 2>(swiz), vec) {}
 
-        template<typename U, typename V> explicit constexpr Vector4(U& swiz, VectorBase<V, 2>&& vec,
-                 REQUIRE(is_SwizzleOfLength_v<U, 2>)) : Vector4<T>(VectorBase<T, 2>(swiz), std::move(vec)) {}
+        template<typename U, typename V> explicit constexpr Vector4(U& swiz, V&& vec,
+                 REQUIRE(is_SwizzleOfLength_v<U, 2> && Is_VectorOfLength_v<V, 2>)) : Vector4<T>(VectorBase<T, 2>(swiz), std::move(vec)) {}
 
         // construct using a combination of swizzle/scalar      
         template<typename U, typename V> explicit constexpr Vector4(U& swiz, const V scalar,
@@ -1115,24 +1102,31 @@ template<typename T> class Vector4 : public VectorBase<T, 4> {
                  REQUIRE(Are_ArithmeticConvertible<T, V, W>::value && is_SwizzleOfLength_v<U, 2>)) : Vector4<T>(v, w, VectorBase<T, 2>(swiz)) {}
     
         // construct from a swizzle
-        template<typename U> explicit constexpr Vector4(U& s, REQUIRE(is_SwizzleOfLength_v<U, 4>)) : VectorBase<T, 4>(s) { CopyParentData(); }
+        template<typename U> explicit constexpr Vector4(U& s, REQUIRE(is_SwizzleOfLength_v<U, 4>)) : m_data(s) {}
     
-        // cast
-        operator VectorBase<T, 4>() const {
-            return VectorBase<T, 4>(m_data);
-        }
-        
-    // assignments
-    public:
-
-        // assignment from another VectorBase child
-        template<typename U, std::size_t M, REQUIRE(M >= 4)> constexpr Vector4& operator=(VectorBase<U, M>&& v) noexcept {
-            for_each(m_data, [this, i = 0, temp = FWD(v)](auto& elm) mutable {
-                elm = static_cast<T>(temp[i]);
-                ++i;
+        // construct from a different type vector
+        template<typename U> explicit constexpr Vector4(const U& v, REQUIRE(Is_VectorOfLength_v<U, 4>)) {
+            static_for<0, 4>([&](std::size_t i) {
+                m_data[i] = static_cast<T>(v[i]);
             });
+        }
+        template<typename U> explicit constexpr Vector4(U&& v, REQUIRE(Is_VectorOfLength_v<U, 4>)) noexcept {
+            static_for<0, 4>([&](std::size_t i) {
+                m_data[i] = static_cast<T>(std::move(v[i]));
+            });
+        }
 
-            return *this;
+        // copy semantics
+        Vector4(const Vector4&)            = default;
+        Vector4& operator=(const Vector4&) = default;
+
+        // move semantics
+        Vector4(Vector4&&)            noexcept = default;
+        Vector4& operator=(Vector4&&) noexcept = default;
+
+        // cast
+        template<typename U> operator VectorBase<U, 4>() const {
+            return VectorBase<U, 4>(static_cast<U>(x), static_cast<U>(y), static_cast<U>(z), static_cast<U>(w));
         }
 
     // access operator overloading
@@ -1165,21 +1159,28 @@ template<typename T> class Vector4 : public VectorBase<T, 4> {
 #define M_OPERATOR(OP)                                                                                  \
         template<typename U, REQUIRE(is_ArithmeticConvertible_v<U, T>)>                                 \
         constexpr Vector4& operator OP (const U xi_value) {                                             \
-            FromVectorBase(std::move(VectorBase<T,4>(*this) OP xi_value));                              \
+            m_data OP xi_value;                                                                         \
+            return *this;                                                                               \
+        }                                                                                               \
+        template<typename U> constexpr Vector4& operator OP (const Vector4<U>& xi_vector) {             \
+            m_data OP xi_vector.m_data;                                                                 \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U> constexpr Vector4& operator OP (Vector4<U>&& xi_vector) {                  \
-            FromVectorBase(std::move(VectorBase<T,4>(*this) OP std::move(xi_vector)));                  \
+            m_data OP std::move(xi_vector.m_data);                                                      \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U> constexpr Vector4& operator OP (const VectorBase<U, 4>& xi_vector) {       \
-            auto _vec = FWD(static_cast<VectorBase<U, 4>>(xi_vector));                                  \
-            FromVectorBase(std::move(VectorBase<T,4>(*this) OP _vec));                                  \
+            m_data OP xi_vector;                                                                        \
+            return *this;                                                                               \
+        }                                                                                               \
+        template<typename U> constexpr Vector4& operator OP (VectorBase<U, 4>&& xi_vector) {            \
+            m_data OP std::move(xi_vector);                                                             \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U, REQUIRE(is_SwizzleOfLength_v<U, 4>)>                                       \
         constexpr Vector4& operator OP (U& s) {                                                         \
-            FromVectorBase(std::move(VectorBase<T,4>(*this) OP s));                                     \
+            m_data OP s;                                                                                \
             return *this;                                                                               \
         }
 
