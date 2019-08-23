@@ -327,13 +327,14 @@ namespace GLSLCPP {
         });
     }
 
-    template<typename T, typename U, std::size_t COL, std::size_t ROW>
-    constexpr inline void SetRow(MatrixBase<T, COL, ROW>& xio_matrix, const std::size_t xi_index, const VectorBase<U, COL>& xi_row) {
-        assert(xi_index < ROW && "MatrixBase::SetRow - attempting to set a row which doesn't exist.");
+    template<typename T, typename U, REQUIRE(is_MatrixBase_v<T> && Is_VectorOfLength_v<U, Columns_v<T>>)>
+    constexpr inline void SetRow(T& xio_matrix, const std::size_t xi_index, const U& xi_row) {
+        using _T = underlying_type_t<T>;
+        assert(xi_index < Rows_v<T> && "MatrixBase::SetRow - attempting to set a row which doesn't exist.");
         auto row = FWD(xi_row);
 
         for_each(row, [&, i = 0](const auto & elm) mutable {
-            xio_matrix(i, xi_index) = static_cast<T>(elm);
+            xio_matrix(i, xi_index) = static_cast<_T>(elm);
             ++i;
         });
     }
