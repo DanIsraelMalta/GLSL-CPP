@@ -25,9 +25,9 @@ namespace GLSLCPP {
     template<class VECTOR, typename T, std::size_t N, bool Unique, std::size_t ... Indexes> class Swizzle;  // general swizzling ("index changer") object
 
     // first generation objects
-    template<typename T> class Vector2;   // general 2 elements vector
-    template<typename T> class Vector3;   // general 3 elements vector
-    template<typename T> class Vector4;   // general 4 elements vector
+    template<typename T> union Vector2;   // general swizzled 2 elements vector
+    template<typename T> union Vector3;   // general swizzled 3 elements vector
+    template<typename T> union Vector4;   // general swizzled 4 elements vector
 
     // common type definitions (vectors)
     using ivec2 = Vector2<std::int32_t>;   // specialized 2 elements vector
