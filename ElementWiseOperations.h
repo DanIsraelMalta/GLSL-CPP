@@ -26,28 +26,28 @@ namespace GLSLCPP {
     // ------------------------------------
     // --- relational operator overload ---
     // ------------------------------------
-
+    
 #define M_OPERATOR(OP)                                                                                              \
-    template<typename T, std::size_t N>                                                                             \
-    constexpr inline bool operator OP (const VectorBase<T, N>& xi_lhs, const VectorBase<T, N>& xi_rhs) {            \
+    template<typename T, typename U, REQUIRE(is_Vector_v<U> && is_Vector_v<T> && (Length_v<U> == Length_v<T>))>     \
+    constexpr inline bool operator OP (const T& xi_lhs, const U& xi_rhs) {                                          \
         bool xo_rational{ true };                                                                                   \
-        for (std::size_t i{}; (i < N) && xo_rational; ++i) {                                                        \
+        for (std::size_t i{}; (i < Length_v<U>) && xo_rational; ++i) {                                              \
             xo_rational = xi_lhs[i] OP xi_rhs[i];                                                                   \
         }                                                                                                           \
         return xo_rational;                                                                                         \
     }                                                                                                               \
-    template<typename T, std::size_t N>                                                                             \
-    constexpr inline bool operator OP (const T xi_lhs, const VectorBase<T, N>& xi_rhs) {                            \
+    template<typename T, typename U, REQUIRE(std::is_arithmetic_v<T> && is_Vector_v<U>)>                            \
+    constexpr inline bool operator OP (const T xi_lhs, const U& xi_rhs) {                                           \
         bool xo_rational{ true };                                                                                   \
-        for (std::size_t i{}; (i < N) && xo_rational; ++i) {                                                        \
+        for (std::size_t i{}; (i < Length_v<U>) && xo_rational; ++i) {                                              \
             xo_rational = xi_lhs OP xi_rhs[i];                                                                      \
         }                                                                                                           \
         return xo_rational;                                                                                         \
     }                                                                                                               \
-    template<typename T, std::size_t N>                                                                             \
-    constexpr inline bool operator OP (const VectorBase<T, N>& xi_lhs, const T xi_rhs) {                            \
+    template<typename T, typename U, REQUIRE(std::is_arithmetic_v<T> && is_Vector_v<U>)>                            \
+    constexpr inline bool operator OP (const U& xi_lhs, const T xi_rhs) {                                           \
         bool xo_rational{ true };                                                                                   \
-        for (std::size_t i{}; (i < N) && xo_rational; ++i) {                                                        \
+        for (std::size_t i{}; (i < Length_v<U>) && xo_rational; ++i) {                                              \
             xo_rational = xi_lhs[i] OP xi_rhs;                                                                      \
         }                                                                                                           \
         return xo_rational;                                                                                         \
