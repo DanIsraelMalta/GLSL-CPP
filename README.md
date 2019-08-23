@@ -19,7 +19,7 @@ This library is not limited to GLSL features alone, as it include numerous mathe
 * [Functions](#Functions)
 * [Quaternion](#Quaternion)
 * [Interval](#Interval)
-* [Scalar Functions](#Scalar-Functions)
+* [Scalar Functions](#Scalar Functions)
 
 ## FAQ
 
@@ -97,9 +97,9 @@ available utilities:
 * 'begin', 'rbegin', 'cbegin', 'crbegin', 'end', 'rend', 'cend', 'crend' allow element wise iteration.
 * 'length' method returns number of elements in vector.
 
-Although it is obvious, I should write it anyway - all the above utilities are available in all VectorBase children.
+Although it is obvious, I should write it anyway - all the above utilities are available in all the specialized vectors.
 
-### 2 elemens vector (replicate a GLSL builtin; inherits from 'VectorBase')
+### 2 elemens vector (replicate a GLSL builtin)
 
 the following 2 elements vectors are available:
 * Vector2<T> - a general 2 elements vector.
@@ -121,7 +121,7 @@ available assignment options:
 * 'Vector2<T> = swizzle'          - assigns a [swizzle](#Swizzling) of length 2 to vector elements.
 * 'Vector2<T> = VectorBase<U, N>' - assigns the elements from right-hand-side vector, whose length is equal or larger then 2.
 
-### 3 elemens vector (replicate a GLSL builtin; inherits from 'VectorBase')
+### 3 elemens vector (replicate a GLSL builtin)
 
 the following 3 elements vectors are available:
 * Vector3<T> - a general 3 elements vector.
@@ -147,7 +147,7 @@ available assignment options:
 * 'Vector3<T> = swizzle'          - assigns a [swizzle](#Swizzling) of length 3 to vector elements.
 * 'Vector3<T> = VectorBase<U, N>' - assigns the elements from right-hand-side vector, whose length is equal or larger then 3.
 
-### 4 elemens vector (replicate a GLSL builtin; inherits from 'VectorBase')
+### 4 elemens vector (replicate a GLSL builtin)
 
 the following 4 elements vectors are available:
 * Vector4<T> - a general 4 elements vector.
@@ -673,7 +673,6 @@ The following specialized functions are availabe for 3x3 matrix:
 * 'EigenValues3x3(matrix, xo_eig)'                                     - given a cubic 3x3 matrix 'matrix', return its eigenvalues as elements in vector 'xo_eig'.
 * 'EigenSolverSymmetric3x3(matrix, xo_eigen_values, xo_eigen_vectors)' - given a cubis symmetric 3x3 matrix 'matrix', return its eigenvalues (as 3 element vector) 'xo_eigen_values', and corresponding eigen vectors (as column ins a 3x3 matrix) 'xo_eigen_vectors'.
 
-
 The following specialized functions are availabe for 4x4 matrix:
 
 * 
@@ -749,7 +748,7 @@ The following general scalar functions are available:
 ```C
 [] check SVD decomposition for rectangular matrix
 [] implement polar decomposition
-[] implement a bunch of 4x4 matrix operations
+[] implement a bunch of 2x2/3x3/4x4 matrix operations
 [] implement quaternion object
 [] implement interval object
 [] allow VectorBase to become dyanmicly sized.
