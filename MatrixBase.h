@@ -60,8 +60,8 @@ namespace GLSLCPP {
         template<typename U> explicit constexpr MatrixBase(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : m_data(xi_value) {}
 
         // construct from VectorBase with ROW*COL elements
-        template<typename U> explicit constexpr MatrixBase(const VectorBase<U, ROW * COL> & xi_vec) : m_data(xi_vec) {}
-        template<typename U> explicit constexpr MatrixBase(VectorBase<U, ROW * COL> && xi_vec) : m_data(std::move(xi_vec)) {}
+        template<typename U> explicit constexpr MatrixBase(const U& xi_vec, REQUIRE(Is_VectorOfLength_v<U, ROW * COL>)) : m_data(xi_vec) {}
+        template<typename U> explicit constexpr MatrixBase(U&& xi_vec, REQUIRE(Is_VectorOfLength_v<U, ROW* COL>))       : m_data(std::move(xi_vec)) {}
 
         // construct using ROW*COL individual values (of same type)
         template<typename ...Us, REQUIRE((sizeof...(Us) == ROW * COL) && Are_ArithmeticConvertible<Us...>::value)>
@@ -137,8 +137,8 @@ namespace GLSLCPP {
             return *this;
         }
 
-        // assign a VectorBase
-        template<typename U> constexpr MatrixBase& operator=(const VectorBase<U, ROW * COL> & xi_vec) noexcept {
+        // assign a vector
+        template<typename U, REQUIRE(Is_VectorOfLength_v<U, ROW * COL>)> constexpr MatrixBase& operator=(const U& xi_vec) noexcept {
             m_data = FWD(xi_vec);
             return *this;
         }
