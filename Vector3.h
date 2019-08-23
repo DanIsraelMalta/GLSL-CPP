@@ -20,12 +20,12 @@ namespace GLSLCPP {
     *
     * @param {T, in} underlying type
     **/
-    template<typename T> class Vector3 : public VectorBase<T, 3> {
+    template<typename T> union Vector3 {
 
         // data structure
     public:
         union {
-            alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) std::array<T, 3> m_data{};
+            VectorBase<T, 3> m_data{};
 
             struct alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) { T x, y, z; };
             struct alignas(std::aligned_storage<sizeof(T), alignof(T)>::type) { T r, g, b; };
@@ -146,19 +146,6 @@ namespace GLSLCPP {
             Swizzle<VectorBase<T, 3>, T, 3, false, 2, 2, 2> ppp;
         };
 
-        // internal helper
-    private:
-
-        // get parent properties
-        void CopyParentData() noexcept {
-            std::copy(VectorBase<T, 3>::m_data.begin(), VectorBase<T, 3>::m_data.end(), Vector3::m_data.begin());
-        }
-
-        // fill Vector2 from VectorBase
-        void FromVectorBase(VectorBase<T, 3>&& xi_base) noexcept {
-            m_data = std::move(xi_base.m_data);
-        }
-
         // query operations
     public:
 
@@ -169,24 +156,24 @@ namespace GLSLCPP {
     public:
 
         // default constructor
-		Vector3() : m_data() {}
-        
+        Vector3() : m_data() {}
+
         // construct using 1 value
-        template<typename U> explicit constexpr Vector3(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : VectorBase<T, 3>(xi_value) { CopyParentData(); }
+        template<typename U> explicit constexpr Vector3(const U xi_value = U{}, REQUIRE(is_ArithmeticConvertible_v<U, T>)) : m_data(xi_value) {}
 
         // construct using 3 values (of same type)
-        template<typename ...Us, REQUIRE((sizeof...(Us) == 3) && Are_ArithmeticConvertible<T, Us...>::value)> explicit constexpr Vector3(Us... xi_values) : VectorBase<T, 3>(xi_values...) { CopyParentData(); }
+        template<typename ...Us, REQUIRE((sizeof...(Us) == 3) && Are_ArithmeticConvertible<T, Us...>::value)> explicit constexpr Vector3(Us... xi_values) : m_data(xi_values...) {}
 
         // construct using 3 values (of different type)
         template<typename U, typename V, typename W> explicit constexpr Vector3(const U u, const V v, const W w, REQUIRE(Are_ArithmeticConvertible<T, U, V, W>::value)) :
-            VectorBase<T, 3>(static_cast<T>(u), static_cast<T>(v), static_cast<T>(w)) { CopyParentData(); }
+            m_data(static_cast<T>(u), static_cast<T>(v), static_cast<T>(w)) {}
 
         // construct using a VectorBase<U,2> child and a scalar
-        template<typename U, typename V> explicit constexpr Vector3(VectorBase<U, 2>&& vec, const V s, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
-            VectorBase<T, 3>(static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(s)) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector3(U&& vec, const V s, REQUIRE(is_ArithmeticConvertible_v<V, T> && Is_VectorOfLength_v<U,2>)) :
+            m_data(static_cast<T>(vec[0]), static_cast<T>(vec[1]), static_cast<T>(s)) {}
 
-        template<typename U, typename V> explicit constexpr Vector3(const V s, VectorBase<U, 2>&& vec, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
-            VectorBase<T, 3>(static_cast<T>(s), static_cast<T>(vec[0]), static_cast<T>(vec[1])) { CopyParentData(); }
+        template<typename U, typename V> explicit constexpr Vector3(const V s, U&& vec, REQUIRE(is_ArithmeticConvertible_v<V, T>&& Is_VectorOfLength_v<U, 2>)) :
+            m_data(static_cast<T>(s), static_cast<T>(vec[0]), static_cast<T>(vec[1])) {}
 
         // construct using a swizzle and a scalar
         template<typename U, typename V> explicit constexpr Vector3(U& swiz, const V scalar, REQUIRE(is_ArithmeticConvertible_v<V, T>)) :
@@ -197,24 +184,31 @@ namespace GLSLCPP {
             Vector3<T>(scalar, VectorBase<T, 2>(swiz)) {}
 
         // construct from a swizzle
-        template<typename U> explicit constexpr Vector3(U& s, REQUIRE(is_Swizzle_v<U> && (Length_v<U> == 3))) : VectorBase<T, 3>(s) { CopyParentData(); }
+        template<typename U> explicit constexpr Vector3(U& s, REQUIRE(is_Swizzle_v<U> && (Length_v<U> == 3))) : m_data(s) {}
 
-        // casting
-        operator VectorBase<T, 3>() const {
-            return VectorBase<T, 3>(m_data);
+        // construct from a different type vector
+        template<typename U> explicit constexpr Vector3(const U& v, REQUIRE(Is_VectorOfLength_v<U, 3>)) {
+            static_for<0, 3>([&](std::size_t i) {
+                m_data[i] = static_cast<T>(v[i]);
+            });
+        }
+        template<typename U> explicit constexpr Vector3(U&& v, REQUIRE(Is_VectorOfLength_v<U, 3>)) noexcept {
+            static_for<0, 3>([&](std::size_t i) {
+                m_data[i] = static_cast<T>(std::move(v[i]));
+            });
         }
 
-        // assignments
-    public:
+        // copy semantics
+        Vector3(const Vector3&)            = default;
+        Vector3& operator=(const Vector3&) = default;
 
-        // assignment from another VectorBase child
-        template<typename U, std::size_t M, REQUIRE(M >= 3)> constexpr Vector3& operator=(VectorBase<U, M>&& v) noexcept {
-            for_each(m_data, [this, i = 0, temp = FWD(v)](auto & elm) mutable {
-                elm = static_cast<T>(temp[i]);
-                ++i;
-            });
+        // move semantics
+        Vector3(Vector3&&)            noexcept = default;
+        Vector3& operator=(Vector3&&) noexcept = default;
 
-            return *this;
+        // casting
+        template<typename U> operator VectorBase<U, 3>() const {
+            return VectorBase<U, 3>(static_cast<U>(x), static_cast<U>(y), static_cast<U>(z));
         }
 
         // access operator overloading
@@ -222,24 +216,48 @@ namespace GLSLCPP {
 
         // '[]' element access
         constexpr T  operator[](const std::size_t i) const { assert(i < 3); return m_data[i]; }
-        constexpr T& operator[](const std::size_t i) { assert(i < 3); return m_data[i]; }
+        constexpr T& operator[](const std::size_t i)       { assert(i < 3); return m_data[i]; }
 
         // get pointer to vector internal storage
-        constexpr       T* data() { return m_data; }
+        constexpr       T* data()       { return m_data; }
         constexpr const T* data() const { return m_data; }
 
         // iterators
     public:
 
-        auto begin()   noexcept -> decltype(m_data.begin()) { return m_data.begin(); }
-        auto rbegin()  noexcept -> decltype(m_data.rbegin()) { return m_data.rbegin(); }
-        auto cbegin()  noexcept -> decltype(m_data.cbegin()) { return m_data.cbegin(); }
+        auto begin()   noexcept -> decltype(m_data.begin())   { return m_data.begin();   }
+        auto rbegin()  noexcept -> decltype(m_data.rbegin())  { return m_data.rbegin();  }
+        auto cbegin()  noexcept -> decltype(m_data.cbegin())  { return m_data.cbegin();  }
         auto crbegin() noexcept -> decltype(m_data.crbegin()) { return m_data.crbegin(); }
 
-        auto end()   noexcept -> decltype(m_data.end()) { return m_data.end(); }
-        auto rend()  noexcept -> decltype(m_data.rend()) { return m_data.rend(); }
-        auto cend()  noexcept -> decltype(m_data.cend()) { return m_data.cend(); }
+        auto end()   noexcept -> decltype(m_data.end())   { return m_data.end();   }
+        auto rend()  noexcept -> decltype(m_data.rend())  { return m_data.rend();  }
+        auto cend()  noexcept -> decltype(m_data.cend())  { return m_data.cend();  }
         auto crend() noexcept -> decltype(m_data.crend()) { return m_data.crend(); }
+
+        // stream operator overloading
+    public:
+
+        // output vector to stream
+        friend std::ostream& operator<<(std::ostream& xio_stream, Vector3& xi_vector) {
+            return xio_stream << xi_vector.m_data;
+        }
+
+        // read the space-separated components of a vector from a stream
+        friend std::istream& operator>>(std::istream& is, Vector3& xi_vector) {
+            if (isVectorLalue(xi_vector)) {
+                for (std::size_t i{}; i < 3; ++i) {
+                    is >> xi_vector[i];
+                }
+            }
+            else {
+                for (std::size_t i{}; i < 3; ++i) {
+                    is >> std::move(xi_vector[i]);
+                }
+            }
+
+            return is;
+        }
 
         // compound operator overloading
     public:
@@ -247,21 +265,28 @@ namespace GLSLCPP {
 #define M_OPERATOR(OP)                                                                                  \
         template<typename U, REQUIRE(is_ArithmeticConvertible_v<U, T>)>                                 \
         constexpr Vector3& operator OP (const U xi_value) {                                             \
-            FromVectorBase(std::move(VectorBase<T,3>(*this) OP xi_value));                              \
+            m_data OP xi_value;                                                                         \
+            return *this;                                                                               \
+        }                                                                                               \
+        template<typename U> constexpr Vector3& operator OP (const Vector3<U>& xi_vector) {             \
+            m_data OP xi_vector.m_data;                                                                 \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U> constexpr Vector3& operator OP (Vector3<U>&& xi_vector) {                  \
-            FromVectorBase(std::move(VectorBase<T,3>(*this) OP std::move(xi_vector)));                  \
+            m_data OP std::move(xi_vector.m_data);                                                      \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U> constexpr Vector3& operator OP (const VectorBase<U, 3>& xi_vector) {       \
-            auto _vec = FWD(static_cast<VectorBase<U, 3>>(xi_vector));                                  \
-            FromVectorBase(std::move(VectorBase<T,3>(*this) OP _vec));                                  \
+            m_data OP xi_vector;                                                                        \
+            return *this;                                                                               \
+        }                                                                                               \
+        template<typename U> constexpr Vector3& operator OP (VectorBase<U, 3>&& xi_vector) {            \
+            m_data OP std::move(xi_vector);                                                             \
             return *this;                                                                               \
         }                                                                                               \
         template<typename U, REQUIRE(is_SwizzleOfLength_v<U, 3>)>                                       \
         constexpr Vector3& operator OP (U& s) {                                                         \
-            FromVectorBase(std::move(VectorBase<T,3>(*this) OP s));                                     \
+            m_data OP s;                                                                                \
             return *this;                                                                               \
         }
 
