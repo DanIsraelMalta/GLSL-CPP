@@ -44,7 +44,7 @@ namespace GLSLCPP {
         explicit constexpr VectorBase(Us... xi_values) : m_data({ static_cast<T>(xi_values)... }) {}
 
         // construct from a swizzle
-        template<typename U> explicit constexpr VectorBase(U&& s, REQUIRE(is_SwizzleOfLength_v<U, N>)) {
+        template<typename U> explicit constexpr VectorBase(U&& s, REQUIRE(is_SwizzleOfLength_v<U, N>)) noexcept {
             s.Pack(std::forward<U>(m_data));
         }
 
@@ -55,7 +55,7 @@ namespace GLSLCPP {
                 ++i;
             });
         }
-        template<typename U> explicit constexpr VectorBase(U& v, REQUIRE(Is_VectorOfLength_v<U, N>)) {
+        template<typename U> explicit constexpr VectorBase(U&& v, REQUIRE(Is_VectorOfLength_v<U, N>)) noexcept {
             for_each(m_data, [&, i = 0](auto & elm) mutable {
                 elm = static_cast<T>(std::move(v[i]));
                 ++i;
@@ -69,7 +69,7 @@ namespace GLSLCPP {
                 ++i;
             });
         }
-        constexpr explicit VectorBase(std::function<T(std::size_t)>&& xi_func) {
+        constexpr explicit VectorBase(std::function<T(std::size_t)>&& xi_func) noexcept {
             for_each(m_data, [&, i = 0](auto & elm) mutable {
                 elm = xi_func(i);
                 ++i;
@@ -84,7 +84,7 @@ namespace GLSLCPP {
             });
             return *this;
         }
-        VectorBase& operator = (std::function<T(std::size_t)>&& xi_func) {
+        VectorBase& operator = (std::function<T(std::size_t)>&& xi_func) noexcept {
             for_each(m_data, [&, i = 0](auto & elm) mutable {
                 elm = xi_func(i);
                 ++i;
@@ -112,30 +112,31 @@ namespace GLSLCPP {
 
         // cast to Vector2
         template<typename U, std::size_t M = N, REQUIRE(M >= 2)> operator Vector2<U>() const {
-            return Vector2<U>(m_data[0], m_data[1]);
+            return Vector2<U>(static_cast<U>(m_data[0]), static_cast<U>(m_data[1]));
         }
 
         // cast to Vector3
         template<typename U, std::size_t M = N, REQUIRE(M >= 3)> operator Vector3<U>() const {
-            return Vector3<U>(m_data[0], m_data[1], m_data[2]);
+            return Vector3<U>(static_cast<U>(m_data[0]), static_cast<U>(m_data[1]), static_cast<U>(m_data[2]));
         }
 
         // cast to Vector4
         template<typename U, std::size_t M = N, REQUIRE(M >= 4)> operator Vector4<U>() const {
-            return Vector4<U>(m_data[0], m_data[1], m_data[2], m_data[3]);
+            return Vector4<U>(static_cast<U>(m_data[0]), static_cast<U>(m_data[1]), 
+                              static_cast<U>(m_data[2]), static_cast<U>(m_data[3]));
         }
 
         // iterators
     public:
 
-        auto begin()   noexcept -> decltype(m_data.begin()) { return m_data.begin(); }
-        auto rbegin()  noexcept -> decltype(m_data.rbegin()) { return m_data.rbegin(); }
-        auto cbegin()  noexcept -> decltype(m_data.cbegin()) { return m_data.cbegin(); }
+        auto begin()   noexcept -> decltype(m_data.begin())   { return m_data.begin();   }
+        auto rbegin()  noexcept -> decltype(m_data.rbegin())  { return m_data.rbegin();  }
+        auto cbegin()  noexcept -> decltype(m_data.cbegin())  { return m_data.cbegin();  }
         auto crbegin() noexcept -> decltype(m_data.crbegin()) { return m_data.crbegin(); }
 
-        auto end()   noexcept -> decltype(m_data.end()) { return m_data.end(); }
-        auto rend()  noexcept -> decltype(m_data.rend()) { return m_data.rend(); }
-        auto cend()  noexcept -> decltype(m_data.cend()) { return m_data.cend(); }
+        auto end()   noexcept -> decltype(m_data.end())   { return m_data.end();   }
+        auto rend()  noexcept -> decltype(m_data.rend())  { return m_data.rend();  }
+        auto cend()  noexcept -> decltype(m_data.cend())  { return m_data.cend();  }
         auto crend() noexcept -> decltype(m_data.crend()) { return m_data.crend(); }
 
         // assignment operations
@@ -167,7 +168,7 @@ namespace GLSLCPP {
 
 #define M_OPERATOR(OP)                                                                                                            \
         template<typename U, REQUIRE(is_ArithmeticConvertible_v<U, T>)>                                                           \
-        constexpr VectorBase& operator OP (const U xi_value) {                                                                    \
+        constexpr inline VectorBase& operator OP (const U xi_value) {                                                             \
             for_each(m_data, [this, xi_value](auto& elm) {                                                                        \
                 elm OP static_cast<T>(xi_value);                                                                                  \
             });                                                                                                                   \
@@ -187,7 +188,7 @@ namespace GLSLCPP {
             });                                                                                                                   \
             return *this;                                                                                                         \
         }                                                                                                                         \
-        template<typename U, REQUIRE(is_SwizzleOfLength_v<U, N>)> constexpr VectorBase& operator OP (U s) {                       \
+        template<typename U, REQUIRE(is_SwizzleOfLength_v<U, N>)> constexpr inline VectorBase& operator OP (U s) {                \
             VectorBase<T, N>&& temp(s);                                                                                           \
             for_each(m_data, [this, t = temp, i = 0](auto& elm) mutable {                                                         \
                 elm OP t[i];                                                                                                      \
@@ -247,35 +248,54 @@ namespace GLSLCPP {
     };
 
 #define M_OPERATOR(OP, AOP)                                                                                              \
-    template<typename T, typename U, std::size_t N, REQUIRE(is_ArithmeticConvertible_v<U, T>)>                           \
-    constexpr inline VectorBase<T, N> operator OP (VectorBase<T, N> xi_lhs, const U xi_rhs) {                            \
-        xi_lhs AOP xi_rhs;                                                                                               \
-        return xi_lhs;                                                                                                   \
+    template<typename T, typename U, REQUIRE(std::is_arithmetic_v<T> && is_Vector_v<U>)>                                 \
+    constexpr inline U operator OP (U xi_vector, const T xi_scalar) {                                                    \
+        if constexpr (is_VectorBase_v<U>) {                                                                              \
+            return (xi_vector AOP xi_scalar);                                                                            \
+        } else {                                                                                                         \
+            return (xi_vector.m_data AOP xi_scalar);                                                                     \
+        }                                                                                                                \
     }                                                                                                                    \
-    template<typename T, typename U, std::size_t N, REQUIRE(is_ArithmeticConvertible_v<U, T>)>                           \
-    constexpr inline VectorBase<T, N> operator OP (const U xi_lhs, VectorBase<T, N> xi_rhs) {                            \
-        xi_rhs AOP xi_lhs;                                                                                               \
-        return xi_rhs;                                                                                                   \
+    template<typename T, typename U, REQUIRE(std::is_arithmetic_v<T> && is_Vector_v<U>)>                                 \
+    constexpr inline U operator OP (const T xi_scalar, U xi_vector) {                                                    \
+        if constexpr (is_VectorBase_v<U>) {                                                                              \
+            return (xi_vector AOP xi_scalar);                                                                            \
+        } else {                                                                                                         \
+            return (xi_vector.m_data AOP xi_scalar);                                                                     \
+        }                                                                                                                \
     }                                                                                                                    \
-    template<typename T, std::size_t N>                                                                                  \
-    constexpr inline VectorBase<T, N> operator OP (VectorBase<T, N> xi_lhs, const VectorBase<T, N>& xi_rhs) {            \
-        xi_lhs AOP xi_rhs;                                                                                               \
-        return xi_lhs;                                                                                                   \
+    template<typename T, typename U, REQUIRE(is_Vector_v<U> && is_Vector_v<T> && (Length_v<U> == Length_v<T>))>          \
+    constexpr inline U operator OP (U xi_lhs, const T xi_rhs) {                                                          \
+        constexpr bool is_lhs_vectorbase{ is_VectorBase_v<U> },                                                          \
+                       is_rhs_vectorbase{ is_VectorBase_v<T> };                                                          \
+                                                                                                                         \
+        if constexpr (is_lhs_vectorbase && is_rhs_vectorbase) {                                                          \
+            return (xi_lhs AOP xi_rhs);                                                                                  \
+        } else if constexpr (is_lhs_vectorbase && !is_rhs_vectorbase) {                                                  \
+            return (xi_lhs AOP xi_rhs.m_data);                                                                           \
+        } else if constexpr (!is_lhs_vectorbase && is_rhs_vectorbase) {                                                  \
+            return (xi_lhs.m_data AOP xi_rhs);                                                                           \
+        } else {                                                                                                         \
+            return (xi_lhs.m_data AOP xi_rhs.m_data);                                                                    \
+        }                                                                                                                \
     }                                                                                                                    \
-    template<typename T, std::size_t N>                                                                                  \
-    constexpr inline VectorBase<T, N> operator OP (const VectorBase<T, N>& xi_lhs, VectorBase<T, N>&& xi_rhs) {          \
-        xi_rhs AOP xi_lhs;                                                                                               \
-        return xi_rhs;                                                                                                   \
+    template<typename T, typename U, REQUIRE(is_Vector_v<T> && is_Swizzle_v<U> && (Length_v<T> == Length_v<U>))>         \
+    constexpr inline U operator OP (T xi_vector, const U& xi_swiz) {                                                     \
+        if constexpr (is_VectorBase_v<T>) {                                                                              \
+            return (xi_vector AOP xi_swiz);                                                                              \
+        }                                                                                                                \
+        else {                                                                                                           \
+            return (xi_vector.m_data AOP xi_swiz);                                                                       \
+        }                                                                                                                \
     }                                                                                                                    \
-    template<typename T, typename U, std::size_t N, REQUIRE(is_Swizzle_v<U>)>                                            \
-    constexpr inline VectorBase<T, N> operator OP (VectorBase<T, N> xi_lhs, U& xi_rhs) {                                 \
-        xi_lhs AOP xi_rhs;                                                                                               \
-        return xi_lhs;                                                                                                   \
-    }                                                                                                                    \
-    template<typename T, typename U, std::size_t N, REQUIRE(is_Swizzle_v<U>)>                                            \
-    constexpr inline VectorBase<T, N> operator OP (U& xi_lhs, VectorBase<T, N> xi_rhs) {                                 \
-        xi_rhs AOP xi_lhs;                                                                                               \
-        return xi_rhs;                                                                                                   \
+    template<typename T, typename U, REQUIRE(is_Vector_v<T> && is_Swizzle_v<U> && (Length_v<T> == Length_v<U>))>         \
+    constexpr inline U operator OP (U& xi_swiz, T xi_vector) {                                                           \
+        if constexpr (is_VectorBase_v<T>) {                                                                              \
+            return (xi_vector AOP xi_swiz);                                                                              \
+        }                                                                                                                \
+        else {                                                                                                           \
+            return (xi_vector.m_data AOP xi_swiz);                                                                       \
+        }                                                                                                                \
     }
 
     M_OPERATOR(+, +=);
