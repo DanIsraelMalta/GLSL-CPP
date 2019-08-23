@@ -317,12 +317,13 @@ namespace GLSLCPP {
     * @param {size_t,     in}     row index
     * @param {VectorBase, in}     new row
     **/
-    template<typename T, typename U, std::size_t COL, std::size_t ROW>
-    constexpr inline void SetRow(MatrixBase<T, COL, ROW>& xio_matrix, const std::size_t xi_index, VectorBase<U, COL>&& xi_row) {
-        assert(xi_index < ROW && "MatrixBase::SetRow - attempting to set a row which doesn't exist.");
+    template<typename T, typename U, REQUIRE(is_MatrixBase_v<T> && Is_VectorOfLength_v<U, Columns_v<T>>)>
+    constexpr inline void SetRow(T& xio_matrix, const std::size_t xi_index, U&& xi_row) {
+        using _T = underlying_type_t<T>;
+        assert(xi_index < Rows_v<T> && "MatrixBase::SetRow - attempting to set a row which doesn't exist.");
 
         for_each(xi_row, [&, i = 0](const auto & elm) mutable {
-            xio_matrix(i, xi_index) = static_cast<T>(elm);
+            xio_matrix(i, xi_index) = static_cast<_T>(elm);
             ++i;
         });
     }
@@ -345,17 +346,19 @@ namespace GLSLCPP {
     * @param {MatrixBase, in|out} matrix whose diagonal shall be set
     * @param {VectorBase/T, in}   new diagonal
     **/
-    template<typename T, REQUIRE(is_Cubic<T>::value)>
-    constexpr inline void SetDiagonal(T& xio_matrix, const VectorBase<underlying_type_t<T>, Columns_v<T>>& xi_diagonal) {
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && Is_VectorOfLength_v<U, Columns_v<T>>)>
+    constexpr inline void SetDiagonal(T& xio_matrix, const U& xi_diagonal) {
+        using _T = underlying_type_t<T>;
         for (std::size_t i{}; i < Columns_v<T>; ++i) {
-            xio_matrix(i, i) = xi_diagonal[i];
+            xio_matrix(i, i) = static_cast<_T>(xi_diagonal[i]);
         }
     }
 
-    template<typename T, REQUIRE(is_Cubic<T>::value)>
-    constexpr inline void SetDiagonal(T& xio_matrix, VectorBase<underlying_type_t<T>, Columns_v<T>>&& xi_diagonal) {
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value&& Is_VectorOfLength_v<U, Columns_v<T>>)>
+    constexpr inline void SetDiagonal(T& xio_matrix, U&& xi_diagonal) {
+        using _T = underlying_type_t<T>;
         for (std::size_t i{}; i < Columns_v<T>; ++i) {
-            xio_matrix(i, i) = std::move(xi_diagonal[i]);
+            xio_matrix(i, i) = static_cast<_T>(std::move(xi_diagonal[i]));
         }
     }
 
@@ -853,8 +856,8 @@ namespace GLSLCPP {
     * @param {VectorBase, out} decomposition pivot vector (row vector, i.e - VectorN<std::size_t, COL>)
     * @param {INT32_T,    out} pivot sign
     **/
-    template<typename T, REQUIRE(is_Cubic<T>::value)>
-    constexpr void LU(const T& xi_matrix, T& xo_lu, VectorBase<std::size_t, Columns_v<T>>& xo_pivot, std::int32_t& xo_sign) noexcept {
+    template<typename T, typename U, REQUIRE(is_Cubic<T>::value && Is_VectorOfLength_v<U, Columns_v<T>> && std::is_same_v<std::size_t, underlying_type_t<U>>)>
+    constexpr void LU(const T& xi_matrix, T& xo_lu, U& xo_pivot, std::int32_t& xo_sign) noexcept {
         using _T = underlying_type_t<T>;
         constexpr std::size_t COL{ Columns_v<T> };
 
@@ -1018,10 +1021,10 @@ namespace GLSLCPP {
     * @param {matrixBase, out} V (not V transposed!) [COLxCOL]
     * @param {bool,       out} true if SVD rutine converged, false otherwise
     **/
-    template<typename T, REQUIRE(is_MatrixBase_v<T> && (Rows_v<T> >= Columns_v<T>))>
-    bool SVDfast(const T& xi_mat, T& xo_UW, 
-             VectorBase<underlying_type_t<T>, Columns_v<T>>& xo_W2, 
-             MatrixBase<underlying_type_t<T>, Columns_v<T>, Columns_v<T>>& xo_V) noexcept {
+    template<typename T, typename U, typename W, REQUIRE(is_MatrixBase_v<T> && (Rows_v<T> >= Columns_v<T>) &&
+                                                         Is_VectorOfLength_v<U, Columns_v<T>> && std::is_same_v<underlying_type_t<T>, underlying_type_t<U>> &&
+                                                         is_Cubic<W>::value && (Columns_v<W> == Columns_v<T>) && std::is_same_v<underlying_type_t<T>, underlying_type_t<W>>)>
+    bool SVDfast(const T& xi_mat, T& xo_UW, U& xo_W2, W& xo_V) noexcept {
 
         // housekeeping
         using _T = underlying_type_t<T>;
@@ -1150,9 +1153,10 @@ namespace GLSLCPP {
     * @param {matrixBase, out} V transposed [COLxCOL]
     * @param {bool,       out} true if SVD rutine converged, false otherwise
     **/
-    template<typename T, REQUIRE(is_MatrixBase_v<T> && (Rows_v<T> >= Columns_v<T>))>
-    bool SVD(const T& xi_mat, T& xo_U, VectorBase<underlying_type_t<T>, Columns_v<T>>& xo_W,
-             MatrixBase<underlying_type_t<T>, Columns_v<T>, Columns_v<T>>& xo_V) noexcept {
+    template<typename T, typename U, typename W, REQUIRE(is_MatrixBase_v<T> && (Rows_v<T> >= Columns_v<T>) &&
+                                                         Is_VectorOfLength_v<U, Columns_v<T>> && std::is_same_v<underlying_type_t<T>, underlying_type_t<U>> &&
+                                                         is_Cubic<W>::value && (Columns_v<W> == Columns_v<T>) && std::is_same_v<underlying_type_t<T>, underlying_type_t<W>>)>
+    bool SVD(const T& xi_mat, T& xo_U, U& xo_W, W& xo_V) noexcept {
 
         // housekeeping
         using _T = underlying_type_t<T>;
