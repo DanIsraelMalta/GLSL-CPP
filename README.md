@@ -1,3 +1,5 @@
+*** see repository [Numerics](https://github.com/DanIsraelMalta/Numerics/tree/main) for improved implementation of this library ***
+
 # GLSL++
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/60dee26081f547baa293ccf2dc7b7002)](https://www.codacy.com/app/DanIsraelMalta/GLSL-CPP?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DanIsraelMalta/GLSL-CPP&amp;utm_campaign=Badge_Grade)
