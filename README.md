@@ -1,4 +1,4 @@
-*** see repository [Numerics](https://github.com/DanIsraelMalta/Numerics/tree/main) for improved implementation of this library ***
+# see repository [Numerics](https://github.com/DanIsraelMalta/Numerics/tree/main) for improved implementation of this library
 
 # GLSL++
 
